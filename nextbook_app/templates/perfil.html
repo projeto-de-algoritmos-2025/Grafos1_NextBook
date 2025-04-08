@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Perfil de {{ user.username }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 text-gray-800">
+
+    <div class="max-w-4xl mx-auto mt-10 p-6 bg-white shadow-lg rounded-xl">
+        <div class="flex items-center space-x-6">
+            <img src="{{ user.profile.image.url }}" alt="Foto de perfil" class="w-24 h-24 rounded-full border-4 border-blue-500 object-cover">
+            <div>
+                <h1 class="text-3xl font-bold">{{ user.first_name }} {{ user.last_name }}</h1>
+                <p class="text-sm text-gray-500">@{{ user.username }}</p>
+                <p class="mt-2">{{ user.profile.bio }}</p>
+            </div>
+        </div>
+
+        <hr class="my-6">
+
+        <div class="mb-6">
+            <h2 class="text-2xl font-semibold mb-2">Meus Livros</h2>
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                {% for livro in livros %}
+                    <div class="bg-gray-50 p-4 rounded-lg shadow">
+                        <h3 class="font-bold text-lg">{{ livro.titulo }}</h3>
+                        <p class="text-sm text-gray-600">{{ livro.autor }}</p>
+                        <p class="text-xs text-gray-400 mt-1">{{ livro.genero }}</p>
+                    </div>
+                {% empty %}
+                    <p class="text-gray-500">Você ainda não adicionou livros.</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div>
+            <h2 class="text-2xl font-semibold mb-2">Recomendações para você</h2>
+            <ul class="list-disc list-inside space-y-1">
+                {% for recomendacao in recomendacoes %}
+                    <li><strong>{{ recomendacao.titulo }}</strong> por {{ recomendacao.autor }}</li>
+                {% empty %}
+                    <p class="text-gray-500">Nenhuma recomendação disponível no momento.</p>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+
+</body>
+</html>

@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-5">
+  <div class="row">
+    <div class="col-md-4">
+      <img src="{{ livro.titulo.capaPath }}" alt="Capa de {{ livro.titulo.titulo }}" class="img-fluid rounded shadow">
+    </div>
+    <div class="col-md-8">
+      <h2>{{ livro.titulo.titulo }}</h2>
+      <p><strong>Autor:</strong> {{ livro.autor }}</p>
+      <p><strong>Editora:</strong> {{ livro.editora }}</p>
+      <p><strong>Data de Publicação:</strong> {{ livro.titulo.dt_publicacao }}</p>
+      <p><strong>Avaliação:</strong> {{ livro.titulo.avaliacao }}/5</p>
+      <p><strong>Número de Páginas:</strong> {{ livro.num_paginas }}</p>
+      
+      <p><strong>Gêneros:</strong>
+        {% for genero in generos %}
+          <span class="badge bg-secondary">{{ genero.nome_genero }}</span>
+        {% endfor %}
+      </p>
+
+      {% if is_favorito %}
+      <form method="post" action="{% url 'toggle_favorito_livro' livro.titulo.id %}">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">Remover dos Favoritos</button>
+      </form>
+      {% else %}
+      <form method="post" action="{% url 'toggle_favorito_livro' livro.titulo.id %}">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-success">Adicionar aos Favoritos</button>
+      </form>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="row mt-4">
+    <div class="col">
+      <h4>Sinopse</h4>
+      <p>{{ livro.titulo.sinopse }}</p>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -71,7 +71,17 @@ def importar_livros():
                     'num_paginas': num_paginas,
                 }
             )
+            categorias = volume_info.get('categories')
+            if not categorias:
+                categorias = [genero_busca.title()]
+           # Normaliza os nomes dos gêneros
+            for categoria in categorias:
+                nome_genero = categoria.strip().lower().capitalize()
+                genero, _ = GeneroLivro.objects.get_or_create(nome_genero=nome_genero)
+                PossuiGeneroLivro.objects.get_or_create(titulo=livro_titulo, genero=genero)
 
+            # Pega os gêneros da API e se não encontrarnada usa o genero_busca da lista GENRES
+            # Depois cria um gênero na tabela caso ainda não exista e cria uma associação ente livros desse gênero em PossuiGeneroLivro
             for categoria in volume_info.get('categories', [genero_busca.title()]):
                 genero, _ = GeneroLivro.objects.get_or_create(nome_genero=categoria)
                 PossuiGeneroLivro.objects.get_or_create(titulo=livro_titulo, genero=genero)

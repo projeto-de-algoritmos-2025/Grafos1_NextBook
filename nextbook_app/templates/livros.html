@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-5">
+  <h2 class="mb-4">Livros disponíveis</h2>
+  <div class="row">
+    {% for livro in livros %}
+    <div class="col-md-3 mb-4">
+      <div class="card h-100">
+        <img src="{{ livro.titulo.capaPath }}" class="card-img-top" alt="Capa de {{ livro.titulo.titulo }}">
+        <div class="card-body d-flex flex-column">
+          <h5 class="card-title">{{ livro.titulo.titulo }}</h5>
+          <p class="card-text">Autor: {{ livro.autor }}</p>
+          <a href="{% url 'detalhe_livro' livro.titulo.slug %}" class="btn btn-primary mt-auto">Ver detalhes</a>
+        </div>
+      </div>
+    </div>
+    {% empty %}
+    <p>Nenhum livro encontrado.</p>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

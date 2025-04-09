@@ -1,61 +1,10 @@
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth import authenticate, login, logout, get_user_model
+from django.shortcuts import render, redirect
+from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
-from .models import Livro, LivroTitulo, GeneroLivro, PossuiGeneroLivro, FavoritoLivro
 from django.contrib.auth.decorators import login_required
-from django.db.models import Case, When, Q
-from django.contrib import messages
 
 def home(request):
     return render(request, 'index.html')
-
-def livros(request):
-    livros = Livro.objects.select_related('titulo').order_by('-id_livro')[:12]
-    return render(request, 'livros.html', {'livros': livros})
-
-def detalhe_livro(request, slug):
-    titulo = get_object_or_404(LivroTitulo, slug=slug)
-    livro = get_object_or_404(Livro, titulo=titulo)
-    generos = GeneroLivro.objects.filter(possuilivrogenero__titulo=titulo)
-
-    is_favorito = titulo.favoritolivro_set.filter(usuario=request.user).exists() if request.user.is_authenticated else False
-
-    context = {
-        'livro': livro,
-        'generos': generos,
-        'is_favorito': is_favorito,
-    }
-    return render(request, 'detalhe_livro.html', context)
-
-def filtro_livros(request):
-    genero = request.GET.get('genero')
-    nota = request.GET.get('nota')
-
-    livros = Livro.objects.select_related('titulo')
-
-    if genero:
-        livros = livros.filter(titulo__possuigenerolivro__genero__nome_genero__iexact=genero)
-    if nota:
-        livros = livros.filter(titulo__avaliacao__gte=nota)
-
-    generos = GeneroLivro.objects.all()
-    return render(request, 'filtro_livros.html', {
-        'livros': livros,
-        'generos': generos
-    })
-
-@login_required
-def toggle_favorito_livro(request, titulo_id):
-    titulo = get_object_or_404(LivroTitulo, id=titulo_id)
-    favorito, created = FavoritoLivro.objects.get_or_create(usuario=request.user, titulo=titulo)
-
-    if not created:
-        favorito.delete()
-        messages.success(request, f"'{titulo.titulo}' foi removido dos seus favoritos.")
-    else:
-        messages.success(request, f"'{titulo.titulo}' foi adicionado aos seus favoritos.")
-
-    return redirect('detalhe_livro', slug=titulo.slug)
 
 
 def cadastro(request):
@@ -131,3 +80,5 @@ def fazer_logout(request):
     logout(request)
     return redirect('home')
 
+def livros(request):
+    return render(request, 'livros.html')

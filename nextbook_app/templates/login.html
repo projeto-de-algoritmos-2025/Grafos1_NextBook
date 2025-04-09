@@ -2,72 +2,54 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Login - NextBook</title>
+    <title>Bem-vindo - NextBook</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            background-color: #f2f2f2;
+            background-color: #f0f4f8;
+            margin: 0;
+            padding: 0;
             display: flex;
-            justify-content: center;
-            align-items: center;
             height: 100vh;
+            align-items: center;
+            justify-content: center;
         }
-        .login-container {
-            background-color: #fff;
-            padding: 2rem;
-            border-radius: 12px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-            width: 300px;
-        }
-        h2 {
+        .container {
+            background-color: white;
+            padding: 2.5rem;
+            border-radius: 16px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
             text-align: center;
+            max-width: 400px;
+            width: 100%;
+        }
+        h1 {
             margin-bottom: 1rem;
         }
-        input {
-            width: 100%;
-            padding: 0.7rem;
-            margin: 0.5rem 0;
-            border-radius: 6px;
-            border: 1px solid #ccc;
+        p {
+            margin-bottom: 2rem;
+            color: #555;
         }
-        button {
-            width: 100%;
-            padding: 0.7rem;
-            border: none;
-            background-color: #007bff;
+        a {
+            display: inline-block;
+            padding: 0.6rem 1.2rem;
+            background-color: #dc3545;
             color: white;
-            border-radius: 6px;
-            cursor: pointer;
+            text-decoration: none;
+            border-radius: 8px;
+            transition: background-color 0.3s;
         }
-        .error {
-            color: red;
-            text-align: center;
-            margin-bottom: 0.5rem;
-        }
-        .signup-link {
-            text-align: center;
-            margin-top: 1rem;
+        a:hover {
+            background-color: #c82333;
         }
     </style>
 </head>
 <body>
-    <div class="login-container">
-        <h2>Login</h2>
-        
-        {% if erro %}
-            <div class="error">{{ erro }}</div>
-        {% endif %}
-        
-        <form method="POST">
-            {% csrf_token %}
-            <input type="text" name="username" placeholder="Usuário" required>
-            <input type="password" name="password" placeholder="Senha" required>
-            <button type="submit">Entrar</button>
-        </form>
+    <div class="container">
+        <h1>Bem-vindo(a) ao NextBook!</h1>
+        <p>Você está logado como <strong>{{ request.user.username }}</strong>.</p>
 
-        <div class="signup-link">
-            <p>Não tem conta? <a href="{% url 'cadastro' %}">Cadastre-se</a></p>
-        </div>
+        
     </div>
 </body>
 </html>

@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+{% load static %}
+<html>
+<head>
+    {% include 'head.html' %}
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta charset="UTF-8"/>
+    <title>Recomendações - Nextbook</title>
+</head>
+<body>
+  {% include 'menu.html' %}
+
+  <div id="recomendacoes" style="background: #000;">
+    <p class="" style="text-align: center; padding: 40px 10px 10px 10px;">Configure abaixo seus gêneros favoritos e a avaliação mínima para os livros.</p>
+    <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#exampleModal">
+      Configurar preferências
+    </button>
+  </div>
+
+  <div class="painel-titulos" style="background: radial-gradient(at 60% 80%, transparent 30%, rgba(0, 0, 0, 0.15) 90%, rgba(0, 0, 0, 0.1) 95%, rgba(0, 0, 0, 0) 100%) 100% 50% / cover, linear-gradient(rgb(0, 0, 0) 0%, transparent 90%);">
+    
+    <!-- Livros -->
+    <h1 class="titulos-titulo">
+      Livros 
+    </h1>  
+    
+    {% with livros=recomendados|dictsort:"tipo" %}
+      {% if livros %}
+        {% for recomendado in recomendados %}
+          {% if recomendado.tipo == "livro" %}
+            <a href="{% url 'pagina_livro' url_slug=recomendado.slug %}">
+                <div class="container-titulos">
+                    <img class="image" src="https://example.com/capas/{{ recomendado.posterPath }}" alt="{{ recomendado.titulo }} - Capa">
+                    <div class="overlay">
+                        <p>{{ recomendado.titulo }}</p>
+                    </div>
+                </div>  
+            </a>
+          {% endif %}
+        {% endfor %}
+      {% else %}
+        <p style="text-align: center; color: #FFF; padding: 40px;">😟 Ops! Não encontramos nenhum livro que corresponda à sua configuração atual. Se ainda não definiu suas preferências, clique no botão acima para configurá-las. Caso já tenha feito isso, tente ajustar suas escolhas e buscar novamente.</p>
+      {% endif %}
+    {% endwith %}
+    
+  </div> 
+
+  <!-- Modal -->
+  <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="exampleModalLabel">Configurar preferências</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <form method="post" style="color: #fff;">
+          <div class="modal-body">
+              {% csrf_token %}
+              <div class="form-group">
+                  <label for="avaliacao_minima" style="font-weight: bold; font-size: 18px;">Avaliação mínima:</label>
+                  <input class="inputs" type="number" name="avaliacao_minima" id="avaliacao_minima" value="{{ avaliacao_minima }}" required step="0.1">
+              </div>
+
+              <fieldset>
+                  <legend class="topico" style="padding: 10px;">Seus gêneros favoritos:</legend>
+                  <div class="checkbox-container">
+                      {% for genero in generos %}
+                          <div class="checkbox-item">
+                              <input type="checkbox" name="generos" value="{{ genero.id }}" id="genero_{{ genero.id }}"
+                                    {% if genero.id in generos_preferidos %}checked{% endif %}>
+                              <label for="genero_{{ genero.id }}">{{ genero.nome_genero }}</label>
+                          </div>
+                      {% endfor %}
+                  </div>
+              </fieldset>
+          
+          </div>
+        
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" style="width: 180px;" data-dismiss="modal">Fechar</button>
+            <button class="btn" style="width: 180px!important;" type="submit">Salvar Preferências</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  
+  {% include 'footer.html' %}
+</body>
+
+</html>

@@ -1,55 +1,67 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-    <meta charset="UTF-8">
-    <title>Bem-vindo - NextBook</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f0f4f8;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            height: 100vh;
-            align-items: center;
-            justify-content: center;
-        }
-        .container {
-            background-color: white;
-            padding: 2.5rem;
-            border-radius: 16px;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
-            text-align: center;
-            max-width: 400px;
-            width: 100%;
-        }
-        h1 {
-            margin-bottom: 1rem;
-        }
-        p {
-            margin-bottom: 2rem;
-            color: #555;
-        }
-        a {
-            display: inline-block;
-            padding: 0.6rem 1.2rem;
-            background-color: #dc3545;
-            color: white;
-            text-decoration: none;
-            border-radius: 8px;
-            transition: background-color 0.3s;
-        }
-        a:hover {
-            background-color: #c82333;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>Bem-vindo(a) ao NextBook!</h1>
-        <p>Você está logado como <strong>{{ request.user.username }}</strong>.</p>
-
-        
+<!-- MENU -->
+{% load static %}
+<nav class="navbar navbar-expand-lg navbar-dark fixed-top">
+    <a class="navbar-brand" href="{% url 'home' %}"><img src="{% static 'imgs/logo2.png' %}" alt="Logo" style="height: 40px;"></a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <i style="color: #fff; font-size: 25px;" class="fa-solid fa-bars"></i>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ml-auto">
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'home' %}">Início</a> 
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'recomendacoes' %}">Recomendações</a> 
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'livros' %}">Livros</a> 
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'categorias' %}">Categorias</a> 
+            </li>
+            {% if user.is_authenticated %}
+            <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    {{ user.username }}
+                </a>
+                <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                    <a class="dropdown-item" href="{% url 'perfil' %}">Meu perfil</a>
+                    <a class="dropdown-item" href="{% url 'logout' %}">Sair</a>
+                </div>
+            </li>
+            {% else %}
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'login' %}">Login</a> 
+            </li>
+            {% endif %}
+        </ul>
     </div>
-</body>
-</html>
+</nav>
+
+<div id="loader">
+    <div class="spinner-border text-white" role="status">
+        <span class="sr-only">Loading...</span>
+    </div>
+</div>
+
+<style>
+#loader {
+    position: fixed;
+    z-index: 9999;
+    background: rgba(7, 6, 20, 0.7); /* Cor escura com leve transparência */
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        setTimeout(function() {
+            var loader = document.getElementById('loader');
+            loader.style.display = 'none';
+        }, 1000); // Delay de 1 segundo para esconder o loader
+    });
+</script>

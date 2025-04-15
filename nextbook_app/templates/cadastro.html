@@ -1,54 +1,41 @@
-from django.db import models
-from django.conf import settings
-from django.utils.text import slugify
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    {% load static %}
+    {% include 'head.html' %}
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta charset="UTF-8"/>
+    <title>Nextbook :: Cadastro</title>
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+</head>
+<body>
+    {% include 'menu.html' %}
 
+    <div class="main-content">
+        <div class="container-cadastro-login" style="margin-top: 100px;">
+            <form method="post">
+                {% csrf_token %}
+                <div class="head">
+                    <span>Cadastro</span>
+                    {% if erro %}
+                        <p style="color: #fff;">{{ erro }}</p>
+                    {% endif %}
+                </div>
+                <div class="inputs">
+                    <input type="text" id="username" name="username" placeholder="Usuário" required><br>
+                    <input type="email" id="email" name="email" placeholder="E-mail" required><br>
+                    <input type="password" id="password" name="password" placeholder="Senha" required><br>
+                    <input type="password" id="confirm_password" name="confirm_password" placeholder="Confirmar Senha" required><br>
+                </div>
+                <button type="submit" style="margin-top: 10px;">Cadastrar</button>
+            </form>
+            <div class="form-footer">
+                <p style="color:#000">Já possui uma conta? <a href="{% url 'login' %}">Faça login</a></p> 
+            </div>
+        </div>
+    </div>
 
-class LivroTitulo(models.Model):
-    titulo = models.CharField(max_length=200)
-    slug = models.SlugField(unique=True)
-    dt_publicacao = models.DateField()
-    sinopse = models.TextField()
-    capaPath = models.CharField(max_length=100, blank=True, null=True)
-    avaliacao = models.FloatField(null=True, blank=True)
-
-    def save(self, *args, **kwargs):
-        if not self.slug:
-            self.slug = slugify(self.titulo)
-        super().save(*args, **kwargs)
-
-    def __str__(self):
-        return self.titulo
-
-
-class Livro(models.Model):
-    id_livro = models.AutoField(primary_key=True)
-    titulo = models.OneToOneField(LivroTitulo, on_delete=models.CASCADE)
-    autor = models.CharField(max_length=100)
-    editora = models.CharField(max_length=100, blank=True)
-    num_paginas = models.IntegerField()
-
-    def __str__(self):
-        return f"Livro: {self.titulo.titulo}"
-
-
-class GeneroLivro(models.Model):
-    id = models.AutoField(primary_key=True)
-    nome_genero = models.CharField(max_length=50)
-
-    def __str__(self):
-        return self.nome_genero
-
-
-class PossuiGeneroLivro(models.Model):
-    titulo = models.ForeignKey(LivroTitulo, on_delete=models.RESTRICT)
-    genero = models.ForeignKey(GeneroLivro, on_delete=models.RESTRICT)
-
-
-class PrefereGeneroLivro(models.Model):
-    usuario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.RESTRICT)
-    genero = models.ForeignKey(GeneroLivro, on_delete=models.RESTRICT)
-
-
-class LivroFavorito(models.Model):
-    usuario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True)
-    titulo = models.ForeignKey(LivroTitulo, on_delete=models.SET_NULL, null=True)
+    {% include 'footer.html' %}
+</body>
+</html>

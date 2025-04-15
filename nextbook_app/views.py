@@ -44,15 +44,20 @@ def realizar_login(request):
     return render(request, 'login.html')
 
 
+
 @login_required
 def perfil(request):
-    favoritos = Favorita.objects.filter(usuario=request.user)
+    usuario = request.user
+
+    #favoritos = Favorito.objects.filter(usuario=usuario).select_related('livro')
+
     context = {
-        'username': request.user.username,
-        'email': request.user.email,
-        'nome_completo': request.user.get_full_name(),
-        'favoritos': favoritos,
+        'username': usuario.username,
+        'email': usuario.email,
+        'nome_completo': f"{usuario.first_name} {usuario.last_name}",
+       # 'favoritos': favoritos,
     }
+
     return render(request, 'perfil.html', context)
 
 
@@ -76,9 +81,15 @@ def editar_perfil(request):
     return render(request, 'editar-perfil.html', {'user': user})
 
 
-def fazer_logout(request):
+def realizar_logout(request):
     logout(request)
-    return redirect('home')
+    return redirect('login')
 
 def livros(request):
     return render(request, 'livros.html')
+
+def categorias(request):
+    return render(request, 'categorias.html') 
+
+def recomendacoes(request):
+    return render(request, 'recomendacoes.html', {})

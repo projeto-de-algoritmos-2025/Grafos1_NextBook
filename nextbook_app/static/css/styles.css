@@ -1,0 +1,158 @@
+.cadastro-bg {
+    background-color: #f0f0f0;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.cadastro-container {
+    width: 100%;
+    max-width: 450px;
+    padding: 30px;
+    border-radius: 10px;
+    background-color: #fff;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.cadastro-card {
+    width: 100%;
+}
+
+.cadastro-header {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.cadastro-header h2 {
+    font-size: 24px;
+    color: var(--primary);
+}
+
+.erro-msg {
+    color: #ff3b3b;
+    text-align: center;
+    margin-top: 10px;
+}
+
+.cadastro-form {
+    display: flex;
+    flex-direction: column;
+}
+
+.input-group {
+    margin-bottom: 15px;
+}
+
+.input-group input {
+    width: 100%;
+    padding: 10px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    margin-top: 5px;
+    transition: border-color 0.3s;
+}
+
+.input-group input:focus {
+    border-color: var(--primary);
+    outline: none;
+}
+
+.btn-submit {
+    background-color: var(--primary);
+    color: white;
+    padding: 12px;
+    border: none;
+    border-radius: 5px;
+    font-size: 18px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.btn-submit:hover {
+    background-color: var(--highlight);
+}
+
+.cadastro-footer {
+    text-align: center;
+    margin-top: 15px;
+}
+
+.cadastro-footer p {
+    color: var(--text);
+}
+
+.link-login {
+    color: var(--primary);
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.link-login:hover {
+    text-decoration: underline;
+}
+
+
+body {
+    display: flex;
+    flex-direction: column;
+    height: 100vh; 
+    margin: 0;
+}
+
+.main-content {
+    flex-grow: 1; 
+}
+
+footer {
+    margin-top: auto; 
+}
+
+body {
+    background-color: #f4f4f4;
+    font-family: Arial, sans-serif;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.categoria-item {
+    background-color: #fff;
+    padding: 20px;
+    margin-bottom: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.categoria-item h2 {
+    color: #333;
+    font-size: 24px;
+    margin-bottom: 10px;
+}
+
+.categoria-item p {
+    color: #777;
+    font-size: 16px;
+}
+
+.categoria-item a {
+    display: inline-block;
+    margin-top: 10px;
+    color: #007bff;
+    text-decoration: none;
+}
+
+.categoria-item a:hover {
+    text-decoration: underline;
+}
+
+h1 {
+    text-align: center;
+    color: #333;
+    font-size: 32px;
+    margin-bottom: 40px;
+}

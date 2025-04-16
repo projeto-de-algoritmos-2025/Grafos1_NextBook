@@ -28,6 +28,8 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
+# Configurações da API Google Books
+GOOGLE_BOOKS_API_KEY = 'AIzaSyAfy69YSJqSvTDOBmRU7t4wQf_v4qw6kLQ'
 
 # Application definition
 

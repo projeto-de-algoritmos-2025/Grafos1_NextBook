@@ -1,57 +1,249 @@
 <!DOCTYPE html>
 {% load static %}
-<html>
+<html lang="pt-br">
 <head>
     {% include 'head.html' %}
+    <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <meta charset="UTF-8"/>
-    <title>Nextbook</title>
+    <title>Nextbook - Descubra seu próximo livro favorito</title>
+
+    <style>
+        .book-carousel {
+            background-color: #1a1a2e;
+            padding: 3rem 0;
+            margin: 2rem 0;
+        }
+        
+        .carousel-item {
+            min-height: 400px; 
+            padding: 0 5%;
+        }
+        
+        .carousel-book {
+            display: flex;
+            height: 100%;
+            align-items: center;
+            background-color: rgba(0, 0, 0, 0.5);
+            border-radius: 15px;
+            overflow: hidden;
+        }
+        
+        .carousel-book-cover {
+            flex: 0 0 35%; 
+            height: 100%;
+            padding: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .carousel-book-cover img {
+            max-height: 80%; 
+            max-width: 100%;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            border-radius: 5px;
+            object-fit: contain;
+        }
+        
+        .carousel-book-info {
+            flex: 1;
+            padding: 2rem;
+            color: white;
+            overflow-y: auto; 
+            max-height: 100%;
+        }
+        
+        .carousel-book-title {
+            font-size: 1.8rem; 
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: #00cec9;
+        }
+        
+        .carousel-book-author {
+            font-size: 1.1rem;
+            margin-bottom: 1.5rem;
+            color: #b8c2cc;
+        }
+        
+        .carousel-book-description {
+            margin-bottom: 2rem;
+            line-height: 1.6;
+            max-height: 150px; 
+            overflow-y: auto;
+            padding-right: 10px; 
+        }
+        
+        .carousel-book-link {
+            background-color: #6c5ce7;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 30px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s;
+            display: inline-block;
+        }
+        
+       
+        .carousel-control-prev, .carousel-control-next {
+            width: 5%;
+            opacity: 0; 
+        }
+        
+        
+        
+        @media (max-width: 768px) {
+            .carousel-item {
+                min-height: auto;
+                padding: 0;
+            }
+            
+            .carousel-book {
+                flex-direction: column;
+                height: auto;
+            }
+            
+            .carousel-book-cover {
+                flex: 0 0 auto;
+                padding: 2rem 2rem 0;
+                height: auto;
+            }
+            
+            .carousel-book-cover img {
+                max-height: 250px;
+            }
+            
+            .carousel-book-info {
+                padding: 1.5rem;
+                overflow-y: visible;
+            }
+            
+            .carousel-book-title {
+                font-size: 1.5rem;
+            }
+            
+            .carousel-book-description {
+                max-height: none;
+                overflow-y: visible;
+            }
+        }
+    </style>
 </head>
 <body>
     {% include 'menu.html' %}
 
-    <!-- Container principal com padding para compensar o menu fixo -->
     <main class="main-content">
-        <!-- Carrossel com banner principal -->
-        <div id="carouselExampleIndicators" class="carousel slide" data-ride="carousel">
-            <!-- ... conteúdo do carrossel ... -->
-        </div>
-
-        <!-- Seção de botão personalizado -->
-        <div class="recommendation-section">
-            {% if user.is_authenticated %}
-            <a href="{% url 'recomendacoes' %}" class="btn btn-primary">Ver recomendações personalizadas</a>
-            {% else %}
-            <p class="login-prompt">Faça <a href="{% url 'login' %}">login</a> e veja livros recomendados especialmente para você!</p>
-            {% endif %}
-        </div>
-
-        <!-- Painel de livros populares -->
-        <section class="popular-books">
-            <div class="section-header">
-                <h2>Livros Populares</h2>
-                <a href="{% url 'livros' %}" class="see-more">Veja mais <i class="fa-solid fa-angles-right"></i></a>
-            </div>
-            <div class="books-grid">
-                {% for livro in livros|slice:":6" %}
-                <a href="{% url 'pagina_livro' livro_id=livro.id %}" class="book-card">
-                    <img src="{{ livro.volumeInfo.imageLinks.thumbnail }}" alt="{{ livro.volumeInfo.title }}">
-                    <div class="book-overlay">
-                        <p>{{ livro.volumeInfo.title }}</p>
+        <!-- Carrossel de Livros -->
+        <section class="book-carousel">
+            <div id="featuredBooksCarousel" class="carousel slide" data-bs-ride="carousel">
+                
+                
+                <div class="carousel-inner" id="carouselBooksContainer">
+                    <!-- Os itens do carrossel serão preenchidos via JavaScript -->
+                    <div class="carousel-item active text-center py-5">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Carregando...</span>
+                        </div>
+                        <p class="mt-2 text-white">Carregando livros...</p>
                     </div>
-                </a>
-                {% endfor %}
+                </div>
+                
+                <button class="carousel-control-prev" type="button" data-bs-target="#featuredBooksCarousel" data-bs-slide="prev">
+                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                    <span class="visually-hidden">Anterior</span>
+                </button>
+                <button class="carousel-control-next" type="button" data-bs-target="#featuredBooksCarousel" data-bs-slide="next">
+                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                    <span class="visually-hidden">Próximo</span>
+                </button>
             </div>
-        </section>
-
-        <!-- Painel de categorias -->
-        <section class="featured-genres">
-            <h2>Gêneros em Destaque</h2>
-            <!-- Adicione aqui os gêneros -->
         </section>
     </main>
 
     {% include 'footer.html' %}
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // IDs de livros populares para exibir no carrossel
+            const featuredBookIds = [
+                'wrOQLV6xB-wC',  // Harry Potter
+                '1q_xAwAAQBAJ',  // O Hobbit
+                'ZY9dDwAAQBAJ'   // It: A Coisa
+            ];
+            
+            const carouselContainer = document.getElementById('carouselBooksContainer');
+            
+            // Função para buscar dados dos livros
+            async function fetchFeaturedBooks() {
+                try {
+                    // Limpa o loader
+                    carouselContainer.innerHTML = '';
+                    
+                    // Busca cada livro individualmente
+                    for (let i = 0; i < featuredBookIds.length; i++) {
+                        const response = await fetch(`https://www.googleapis.com/books/v1/volumes/${featuredBookIds[i]}`);
+                        const bookData = await response.json();
+                        
+                        // Cria o item do carrossel
+                        const carouselItem = document.createElement('div');
+                        carouselItem.className = `carousel-item ${i === 0 ? 'active' : ''}`;
+                        
+                        // Extrai os dados do livro
+                        const volumeInfo = bookData.volumeInfo;
+                        const title = volumeInfo.title || 'Título desconhecido';
+                        const authors = volumeInfo.authors ? volumeInfo.authors.join(', ') : 'Autor desconhecido';
+                        let description = volumeInfo.description || 'Descrição não disponível.';
+                        
+                        // Limita a descrição para não ocupar muito espaço
+                        if (description.length > 300) {
+                            description = description.substring(0, 300) + '...';
+                        }
+                        
+                        const thumbnail = volumeInfo.imageLinks?.thumbnail || '{% static "imgs/book-placeholder.png" %}';
+                        const bookLink = `/livro/${bookData.id}/`;
+                                                
+                        // HTML do item do carrossel
+                        carouselItem.innerHTML = `
+                            <div class="carousel-book">
+                                <div class="carousel-book-cover">
+                                    <img src="${thumbnail}" alt="${title}">
+                                </div>
+                                <div class="carousel-book-info">
+                                    <h3 class="carousel-book-title">${title}</h3>
+                                    <p class="carousel-book-author">${authors}</p>
+                                    <p class="carousel-book-description">${description}</p>
+                                    <a href="${bookLink}" class="carousel-book-link">Ver detalhes</a>
+                                </div>
+                            </div>
+                        `;
+                        
+                        carouselContainer.appendChild(carouselItem);
+                    }
+                    
+                    // Inicializa o carrossel após carregar os itens
+                    const carousel = new bootstrap.Carousel(document.getElementById('featuredBooksCarousel'), {
+                        interval: 5000, // Muda a cada 5 segundos
+                        wrap: true // Permite rolar infinitamente
+                    });
+                    
+                } catch (error) {
+                    console.error('Erro ao buscar livros:', error);
+                    carouselContainer.innerHTML = `
+                        <div class="carousel-item active text-center py-5">
+                            <p class="text-white">Não foi possível carregar os livros. Por favor, tente novamente mais tarde.</p>
+                        </div>
+                    `;
+                }
+            }
+            
+            // Chama a função para carregar os livros
+            fetchFeaturedBooks();
+        });
+    </script>
+    
+    <!-- Adiciona o JavaScript do Bootstrap (necessário para o carrossel funcionar) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

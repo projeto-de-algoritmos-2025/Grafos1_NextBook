@@ -1,11 +1,22 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse, Http404
+from django.conf import settings
+from django.core.cache import cache
+from django.views.decorators.cache import cache_page
+import requests
+from .models import Favorito  
+from django.core.exceptions import ImproperlyConfigured
+from django.core.paginator import Paginator
+import random
+from datetime import datetime
+
+
 
 def home(request):
     return render(request, 'index.html')
-
 
 def cadastro(request):
     if request.method == 'POST':
@@ -30,7 +41,6 @@ def cadastro(request):
 
     return render(request, 'cadastro.html')
 
-
 def realizar_login(request):
     if request.method == 'POST':
         username = request.POST.get('username')
@@ -43,23 +53,19 @@ def realizar_login(request):
 
     return render(request, 'login.html')
 
-
-
 @login_required
 def perfil(request):
     usuario = request.user
-
-    #favoritos = Favorito.objects.filter(usuario=usuario).select_related('livro')
+    favoritos = Favorito.objects.filter(usuario=usuario) if hasattr(usuario, 'favorito_set') else None
 
     context = {
         'username': usuario.username,
         'email': usuario.email,
         'nome_completo': f"{usuario.first_name} {usuario.last_name}",
-       # 'favoritos': favoritos,
+        'favoritos': favoritos,
     }
 
     return render(request, 'perfil.html', context)
-
 
 @login_required
 def editar_perfil(request):
@@ -80,16 +86,243 @@ def editar_perfil(request):
 
     return render(request, 'editar-perfil.html', {'user': user})
 
-
 def realizar_logout(request):
     logout(request)
     return redirect('login')
 
 def livros(request):
-    return render(request, 'livros.html')
+    """View para listagem de livros com opções de ordenação e fallback para mock"""
+    from datetime import datetime  # Garante que o datetime está importado
+
+    # Função auxiliar para converter a data corretamente
+    def parse_date(date_str):
+        """Tenta converter data em formatos diferentes"""
+        formats = ['%Y-%m-%d', '%Y-%m', '%Y']
+        for fmt in formats:
+            try:
+                return datetime.strptime(date_str, fmt)
+            except (ValueError, TypeError):
+                continue
+        return datetime.min
+
+    DEFAULT_COUNT = 12
+    MAX_RESULTS = 40
+    order_by = request.GET.get('order')
+    
+    try:
+        # Busca livros na API
+        params = {
+            'q': 'lang:pt',
+            'maxResults': MAX_RESULTS,
+            'key': settings.GOOGLE_BOOKS_API_KEY
+        }
+        response = requests.get('https://www.googleapis.com/books/v1/volumes', params=params)
+        response.raise_for_status()
+        
+        all_books = response.json().get('items', [])
+        
+        # Seleciona livros (aleatórios sem filtro, ou os primeiros com filtro)
+        if not order_by:
+            livros = random.sample(all_books, min(DEFAULT_COUNT, len(all_books))) if all_books else []
+        else:
+            livros = all_books[:DEFAULT_COUNT]
+        
+        # filtros/ordenação
+        if order_by == 'title':
+            livros.sort(key=lambda x: x['volumeInfo'].get('title', '').lower())
+        elif order_by == '-title':
+            livros.sort(key=lambda x: x['volumeInfo'].get('title', '').lower(), reverse=True)
+        elif order_by == 'average_rating':
+            livros.sort(key=lambda x: x['volumeInfo'].get('averageRating', 0))
+        elif order_by == '-average_rating':
+            livros.sort(key=lambda x: x['volumeInfo'].get('averageRating', 0), reverse=True)
+        elif order_by == 'published_date':
+            livros.sort(key=lambda x: parse_date(x['volumeInfo'].get('publishedDate', '')), reverse=False)
+        elif order_by == '-published_date':
+            livros.sort(key=lambda x: parse_date(x['volumeInfo'].get('publishedDate', '')), reverse=True)
+
+        # Paginação
+        paginator = Paginator(livros, DEFAULT_COUNT)
+        page_number = request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
+        
+        return render(request, 'livros.html', {
+            'livros': page_obj,
+            'is_paginated': paginator.num_pages > 1,
+            'page_obj': page_obj,
+            'current_order': order_by  # Para manter o filtro ativo na template
+        })
+        
+    except Exception as e:
+        print(f"Erro ao buscar livros: {str(e)}")
+        livros_mock = [
+            {
+                'id': f'mock{i}',
+                'volumeInfo': {
+                    'title': f'Livro Exemplo {i+1}',
+                    'authors': ['Autor Brasileiro'],
+                    'publishedDate': str(2020 + i),
+                    'imageLinks': {'thumbnail': f'https://via.placeholder.com/128x193.png?text=Exemplo+{i+1}'},
+                    'language': 'pt',
+                    'averageRating': random.randint(1, 5)
+                }
+            } for i in range(DEFAULT_COUNT)
+        ]
+        return render(request, 'livros.html', {
+            'livros': livros_mock,
+            'current_order': None
+        })
 
 def categorias(request):
     return render(request, 'categorias.html') 
 
 def recomendacoes(request):
     return render(request, 'recomendacoes.html', {})
+
+@cache_page(60 * 15)
+def pagina_livro(request, livro_id):
+    return pagina_livros(request, livro_id)
+
+@cache_page(60 * 15) 
+def pagina_livros(request, livro_id):
+    
+    if not hasattr(settings, 'GOOGLE_BOOKS_API_KEY') or not settings.GOOGLE_BOOKS_API_KEY:
+        raise ImproperlyConfigured("GOOGLE_BOOKS_API_KEY não está configurada no settings.py")
+    
+    # Busca na API do Google Books
+    try:
+        response = requests.get(
+            f'https://www.googleapis.com/books/v1/volumes/{livro_id}',
+            params={'key': settings.GOOGLE_BOOKS_API_KEY}
+        )
+        response.raise_for_status()
+        livro_data = response.json()
+    except requests.RequestException as e:
+        raise Http404("Livro não encontrado")
+
+    volume_info = livro_data.get('volumeInfo', {})
+    sale_info = livro_data.get('saleInfo', {})
+
+    # Verifica se o livro está nos favoritos do usuário
+    esta_favorito = False
+    if request.user.is_authenticated and hasattr(request.user, 'favorito_set'):
+        esta_favorito = request.user.favorito_set.filter(livro_google_id=livro_id).exists()
+
+    context = {
+        'livro_id': livro_id,
+        'titulo': volume_info.get('title', 'Título desconhecido'),
+        'autores': ', '.join(volume_info.get('authors', ['Autor desconhecido'])),
+        'descricao': volume_info.get('description', 'Descrição não disponível.'),
+        'capa': volume_info.get('imageLinks', {}).get('thumbnail', ''),
+        'editora': volume_info.get('publisher', 'Editora desconhecida'),
+        'data_publicacao': volume_info.get('publishedDate', ''),
+        'paginas': volume_info.get('pageCount', 0),
+        'categorias': ', '.join(volume_info.get('categories', ['Sem categoria'])),
+        'idioma': volume_info.get('language', ''),
+        'isbn': next(
+            (id['identifier'] for id in volume_info.get('industryIdentifiers', []) 
+             if id['type'] == 'ISBN_13'), ''),
+        'avaliacao': volume_info.get('averageRating', 0),
+        'contagem_avaliacoes': volume_info.get('ratingsCount', 0),
+        'link_compra': sale_info.get('buyLink', volume_info.get('infoLink', '#')),
+        'esta_favorito': esta_favorito
+    }
+
+    return render(request, 'pagina_livro.html', context)
+
+@login_required
+def adicionar_favorito(request, livro_id):
+    if request.method == 'POST':
+        # Verifica se já é favorito
+        favorito, created = Favorito.objects.get_or_create(
+            usuario=request.user,
+            livro_google_id=livro_id
+        )
+        
+        if not created:
+            favorito.delete()
+            adicionado = False
+        else:
+            adicionado = True
+
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return JsonResponse({
+                'status': 'success',
+                'adicionado': adicionado,
+                'contagem': request.user.favorito_set.count()
+            })
+    
+    return redirect('pagina_livro', livro_id=livro_id)
+
+def buscar_similares(request, livro_id):
+    try:
+        # Primeiro busca as categorias do livro atual
+        livro_response = requests.get(
+            f'https://www.googleapis.com/books/v1/volumes/{livro_id}',
+            params={'key': settings.GOOGLE_BOOKS_API_KEY}
+        )
+        livro_response.raise_for_status()
+        livro_data = livro_response.json()
+        
+        categorias = livro_data.get('volumeInfo', {}).get('categories', ['general'])
+        categoria_principal = categorias[0]
+
+        # Busca livros similares
+        response = requests.get(
+            'https://www.googleapis.com/books/v1/volumes',
+            params={
+                'q': f'subject:{categoria_principal}',
+                'maxResults': 4,
+                'key': settings.GOOGLE_BOOKS_API_KEY
+            }
+        )
+        response.raise_for_status()
+        data = response.json()
+
+        # Filtra para não incluir o livro atual
+        similares = [
+            livro for livro in data.get('items', []) 
+            if livro['id'] != livro_id
+        ][:3]  # Limita a 3 resultados
+
+        # Prepara os dados para o template
+        livros_similares = []
+        for livro in similares:
+            volume_info = livro.get('volumeInfo', {})
+            livros_similares.append({
+                'id': livro['id'],
+                'titulo': volume_info.get('title', 'Título desconhecido'),
+                'autor': volume_info.get('authors', ['Autor desconhecido'])[0],
+                'capa': volume_info.get('imageLinks', {}).get('thumbnail', '')
+            })
+
+        return JsonResponse({
+            'status': 'success',
+            'livros': livros_similares
+        })
+
+    except requests.RequestException as e:
+        return JsonResponse({
+            'status': 'error',
+            'message': str(e)
+        }, status=500)
+ # views.py
+def livros_debug(request):
+    livros = [
+        {
+            'id': 'bM_MhU5SUWsC',
+            'volumeInfo': {
+                'title': 'A criança surda',
+                'authors': ['Marcia Goldfeld'],
+                'publishedDate': '2002',
+                'imageLinks': {
+                    'thumbnail': 'http://books.google.com/books/content?id=bM_MhU5SUWsC&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api'
+                },
+                'language': 'pt',
+                'averageRating': 4
+            }
+        },
+        
+    ]
+    
+    return render(request, 'livros.html', {'livros': livros})

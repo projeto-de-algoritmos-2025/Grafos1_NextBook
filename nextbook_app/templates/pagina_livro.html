@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="pt-br">
+<head>
+    {% include 'head.html' %}
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalhes do Livro - Nextbook</title>
+
+    <style>
+        :root {
+            --primary-color: #6c5ce7;
+            --primary-hover: #5649c0;
+            --secondary-color: #00cec9;
+            --dark-bg: #1a1a2e;
+            --darker-bg: #16213e;
+            --text-color: #f8f9fa;
+            --text-secondary: #b8c2cc;
+        }
+
+        .book-detail-container {
+            background-color: var(--dark-bg);
+            color: var(--text-color);
+            min-height: 100vh;
+            padding-top: 80px;
+        }
+
+        .book-header {
+            background: linear-gradient(rgba(26, 26, 46, 0.9), rgba(26, 26, 46, 0.9)), 
+                        var(--book-bg) center/cover;
+            padding: 3rem 0;
+            margin-bottom: 3rem;
+        }
+
+        .book-content {
+            display: flex;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            gap: 3rem;
+        }
+
+        .book-cover {
+            flex: 0 0 300px;
+            position: relative;
+            height: 450px;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.5);
+            border: 3px solid var(--primary-color);
+        }
+
+        .book-cover img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .book-info {
+            flex: 1;
+        }
+
+        .book-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: var(--text-color);
+        }
+
+        .book-authors {
+            font-size: 1.2rem;
+            color: var(--secondary-color);
+            margin-bottom: 1.5rem;
+        }
+
+        .book-meta {
+            display: flex;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .meta-icon {
+            color: var(--primary-color);
+        }
+
+        .book-description {
+            line-height: 1.8;
+            margin-bottom: 2rem;
+            padding-right: 2rem;
+        }
+
+        .book-actions {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 3rem;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 0.8rem 1.5rem;
+            border-radius: 30px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-outline {
+            background-color: transparent;
+            color: var(--primary-color);
+            border: 2px solid var(--primary-color);
+            padding: 0.8rem 1.5rem;
+            border-radius: 30px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-outline:hover {
+            background-color: rgba(108, 92, 231, 0.1);
+            transform: translateY(-3px);
+        }
+
+        .book-details {
+            background-color: var(--darker-bg);
+            padding: 3rem 2rem;
+            border-radius: 10px;
+            margin-bottom: 3rem;
+        }
+
+        .details-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 2rem;
+        }
+
+        .detail-item h3 {
+            color: var(--secondary-color);
+            margin-bottom: 0.5rem;
+            font-size: 1.1rem;
+        }
+
+        .detail-item p {
+            color: var(--text-secondary);
+        }
+
+        .similar-books {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem 3rem;
+        }
+
+        .section-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 2rem;
+            color: var(--text-color);
+            position: relative;
+            padding-bottom: 10px;
+        }
+
+        .section-title::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            width: 60px;
+            height: 3px;
+            background-color: var(--primary-color);
+        }
+
+        .books-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .book-card {
+            position: relative;
+            border-radius: 10px;
+            overflow: hidden;
+            transition: all 0.3s;
+            aspect-ratio: 2/3;
+        }
+
+        .book-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .book-card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .book-card-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 1rem;
+            background: linear-gradient(to top, rgba(0, 0, 0, 0.9), transparent);
+            color: var(--text-color);
+        }
+
+        .book-card-title {
+            font-weight: 600;
+            margin-bottom: 0.3rem;
+            font-size: 0.9rem;
+        }
+
+        .book-card-author {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        @media (max-width: 992px) {
+            .book-content {
+                flex-direction: column;
+            }
+
+            .book-cover {
+                margin: 0 auto;
+                width: 250px;
+                height: 375px;
+            }
+
+            .book-description {
+                padding-right: 0;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .book-cover {
+                width: 200px;
+                height: 300px;
+            }
+
+            .book-title {
+                font-size: 2rem;
+            }
+
+            .book-actions {
+                flex-direction: column;
+            }
+
+            .btn-primary, .btn-outline {
+                width: 100%;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    {% include 'menu.html' %}
+
+    <div class="book-detail-container">
+        <!-- Cabeçalho com imagem de fundo opcional -->
+        <div class="book-header" id="bookHeader">
+            <div class="book-content">
+                <div class="book-cover">
+                    <img id="bookCover" src="" alt="Capa do livro">
+                </div>
+                
+                <div class="book-info">
+                    <h1 class="book-title" id="bookTitle">Carregando...</h1>
+                    <p class="book-authors" id="bookAuthors"></p>
+                    
+                    <div class="book-meta">
+                        <span class="meta-item">
+                            <i class="fas fa-star meta-icon"></i>
+                            <span id="bookRating"></span>
+                        </span>
+                        <span class="meta-item">
+                            <i class="fas fa-calendar-alt meta-icon"></i>
+                            <span id="bookPublishedDate"></span>
+                        </span>
+                        <span class="meta-item">
+                            <i class="fas fa-book-open meta-icon"></i>
+                            <span id="bookPageCount"></span>
+                        </span>
+                        <span class="meta-item">
+                            <i class="fas fa-language meta-icon"></i>
+                            <span id="bookLanguage"></span>
+                        </span>
+                    </div>
+                    
+                    <div class="book-actions">
+                        <button class="btn-primary" id="addToFavorites">
+                            <i class="fas fa-heart"></i> Adicionar aos Favoritos
+                        </button>
+                        <a href="#" class="btn-outline" id="buyLink" target="_blank">
+                            <i class="fas fa-shopping-cart"></i> Comprar
+                        </a>
+                    </div>
+                    
+                    <div class="book-description" id="bookDescription"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Detalhes do livro -->
+        <div class="book-content">
+            <div class="book-details">
+                <h2 class="section-title">Detalhes do Livro</h2>
+                
+                <div class="details-grid">
+                    <div class="detail-item">
+                        <h3>Editora</h3>
+                        <p id="bookPublisher"></p>
+                    </div>
+                    
+                    <div class="detail-item">
+                        <h3>ISBN</h3>
+                        <p id="bookIsbn"></p>
+                    </div>
+                    
+                    <div class="detail-item">
+                        <h3>Categorias</h3>
+                        <p id="bookCategories"></p>
+                    </div>
+                    
+                    <div class="detail-item">
+                        <h3>Idioma</h3>
+                        <p id="bookLanguageFull"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Livros similares -->
+        <div class="similar-books">
+            <h2 class="section-title">Livros Similares</h2>
+            
+            <div class="books-grid" id="similarBooks">
+                <!-- Livros similares serão carregados via JavaScript -->
+                <div class="text-center py-5">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Carregando...</span>
+                    </div>
+                    <p class="mt-2 text-white">Carregando livros similares...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% include 'footer.html' %}
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Obtém o ID do livro da URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const bookId = urlParams.get('livro_id');
+            
+            if (!bookId) {
+                window.location.href = '/';
+                return;
+            }
+
+            // Elementos da página
+            const bookHeader = document.getElementById('bookHeader');
+            const bookTitle = document.getElementById('bookTitle');
+            const bookAuthors = document.getElementById('bookAuthors');
+            const bookRating = document.getElementById('bookRating');
+            const bookPublishedDate = document.getElementById('bookPublishedDate');
+            const bookPageCount = document.getElementById('bookPageCount');
+            const bookLanguage = document.getElementById('bookLanguage');
+            const bookDescription = document.getElementById('bookDescription');
+            const bookPublisher = document.getElementById('bookPublisher');
+            const bookIsbn = document.getElementById('bookIsbn');
+            const bookCategories = document.getElementById('bookCategories');
+            const bookLanguageFull = document.getElementById('bookLanguageFull');
+            const bookCover = document.getElementById('bookCover');
+            const buyLink = document.getElementById('buyLink');
+            const similarBooksContainer = document.getElementById('similarBooks');
+
+            // Função para formatar a data
+            function formatDate(dateString) {
+                if (!dateString) return 'Data desconhecida';
+                
+                const date = new Date(dateString);
+                return date.toLocaleDateString('pt-BR', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+            }
+
+            // Função para buscar os dados do livro
+            async function fetchBookDetails() {
+                try {
+                    // Busca os dados do livro principal
+                    const response = await fetch(`https://www.googleapis.com/books/v1/volumes/${bookId}`);
+                    const bookData = await response.json();
+                    
+                    if (bookData.error) {
+                        throw new Error(bookData.error.message);
+                    }
+
+                    const volumeInfo = bookData.volumeInfo;
+                    const saleInfo = bookData.saleInfo;
+
+                    // Preenche os dados do livro
+                    bookTitle.textContent = volumeInfo.title || 'Título desconhecido';
+                    
+                    // Autores
+                    if (volumeInfo.authors && volumeInfo.authors.length > 0) {
+                        bookAuthors.textContent = `por ${volumeInfo.authors.join(', ')}`;
+                    } else {
+                        bookAuthors.textContent = 'Autor desconhecido';
+                    }
+                    
+                    // Avaliação
+                    if (volumeInfo.averageRating) {
+                        bookRating.textContent = `${volumeInfo.averageRating} (${volumeInfo.ratingsCount || '0'} avaliações)`;
+                    } else {
+                        bookRating.textContent = 'Não avaliado';
+                    }
+                    
+                    // Data de publicação
+                    bookPublishedDate.textContent = formatDate(volumeInfo.publishedDate);
+                    
+                    // Número de páginas
+                    if (volumeInfo.pageCount) {
+                        bookPageCount.textContent = `${volumeInfo.pageCount} páginas`;
+                    } else {
+                        bookPageCount.textContent = 'Número de páginas não disponível';
+                    }
+                    
+                    // Idioma
+                    if (volumeInfo.language) {
+                        const languageNames = new Intl.DisplayNames(['pt'], {type: 'language'});
+                        bookLanguage.textContent = volumeInfo.language.toUpperCase();
+                        bookLanguageFull.textContent = languageNames.of(volumeInfo.language) || volumeInfo.language;
+                    } else {
+                        bookLanguage.textContent = '--';
+                        bookLanguageFull.textContent = 'Idioma desconhecido';
+                    }
+                    
+                    // Descrição
+                    if (volumeInfo.description) {
+                        bookDescription.innerHTML = volumeInfo.description.replace(/\n/g, '<br>');
+                    } else {
+                        bookDescription.textContent = 'Descrição não disponível.';
+                    }
+                    
+                    // Editora
+                    bookPublisher.textContent = volumeInfo.publisher || 'Editora desconhecida';
+                    
+                    // ISBN
+                    if (volumeInfo.industryIdentifiers) {
+                        const isbn = volumeInfo.industryIdentifiers.find(id => id.type === 'ISBN_13') || 
+                                     volumeInfo.industryIdentifiers[0];
+                        bookIsbn.textContent = isbn.identifier;
+                    } else {
+                        bookIsbn.textContent = 'ISBN não disponível';
+                    }
+                    
+                    // Categorias
+                    if (volumeInfo.categories) {
+                        bookCategories.textContent = volumeInfo.categories.join(', ');
+                    } else {
+                        bookCategories.textContent = 'Categorias não disponíveis';
+                    }
+                    
+                    // Capa do livro
+                    if (volumeInfo.imageLinks) {
+                        bookCover.src = volumeInfo.imageLinks.thumbnail.replace('http://', 'https://');
+                        
+                        // Usa a imagem de maior resolução para o fundo se disponível
+                        const bgImage = volumeInfo.imageLinks.medium || 
+                                       volumeInfo.imageLinks.large || 
+                                       volumeInfo.imageLinks.thumbnail;
+                        bookHeader.style.setProperty('--book-bg', `url(${bgImage.replace('http://', 'https://')}`);
+                    } else {
+                        bookCover.src = '{% static "imgs/book-placeholder.png" %}';
+                    }
+                    
+                    // Link de compra
+                    if (saleInfo && saleInfo.buyLink) {
+                        buyLink.href = saleInfo.buyLink;
+                    } else if (volumeInfo.infoLink) {
+                        buyLink.href = volumeInfo.infoLink;
+                    } else {
+                        buyLink.style.display = 'none';
+                    }
+                    
+                    // Busca livros similares
+                    if (volumeInfo.categories && volumeInfo.categories.length > 0) {
+                        fetchSimilarBooks(volumeInfo.categories[0]);
+                    }
+                } catch (error) {
+                    console.error('Erro ao carregar detalhes do livro:', error);
+                    
+                    // Mensagem de erro
+                    bookTitle.textContent = 'Erro ao carregar o livro';
+                    bookDescription.textContent = 'Não foi possível carregar as informações deste livro. Por favor, tente novamente mais tarde.';
+                    
+                    similarBooksContainer.innerHTML = '';
+                }
+            }
+
+            // Função para buscar livros similares
+            async function fetchSimilarBooks(category) {
+                try {
+                    const response = await fetch(`https://www.googleapis.com/books/v1/volumes?q=subject:${encodeURIComponent(category)}&maxResults=4`);
+                    const data = await response.json();
+                    
+                    if (data.items && data.items.length > 0) {
+                        similarBooksContainer.innerHTML = '';
+                        
+                        data.items.forEach(item => {
+                            if (item.id === bookId) return; // Pula o livro atual
+                            
+                            const volumeInfo = item.volumeInfo;
+                            const bookCard = document.createElement('a');
+                            bookCard.className = 'book-card';
+                            bookCard.href = `{% url 'pagina-livros' livro_id='' %}${item.id}`;
+                            
+                            bookCard.innerHTML = `
+                                <img src="${volumeInfo.imageLinks?.thumbnail || '{% static "imgs/book-placeholder.png" %}'}" alt="${volumeInfo.title}">
+                                <div class="book-card-overlay">
+                                    <h3 class="book-card-title">${volumeInfo.title || 'Título desconhecido'}</h3>
+                                    <p class="book-card-author">${volumeInfo.authors?.[0] || 'Autor desconhecido'}</p>
+                                </div>
+                            `;
+                            
+                            similarBooksContainer.appendChild(bookCard);
+                        });
+                    } else {
+                        similarBooksContainer.innerHTML = '<p class="text-white">Nenhum livro similar encontrado.</p>';
+                    }
+                } catch (error) {
+                    console.error('Erro ao buscar livros similares:', error);
+                    similarBooksContainer.innerHTML = '<p class="text-white">Não foi possível carregar livros similares.</p>';
+                }
+            }
+
+            // Botão de favoritos
+            document.getElementById('addToFavorites').addEventListener('click', function() {
+           
+                const favorites = JSON.parse(localStorage.getItem('favorites')) || [];
+                
+                if (!favorites.includes(bookId)) {
+                    favorites.push(bookId);
+                    localStorage.setItem('favorites', JSON.stringify(favorites));
+                    
+                    this.innerHTML = '<i class="fas fa-check"></i> Adicionado aos Favoritos';
+                    this.style.backgroundColor = 'var(--secondary-color)';
+                    
+                    setTimeout(() => {
+                        this.innerHTML = '<i class="fas fa-heart"></i> Adicionar aos Favoritos';
+                        this.style.backgroundColor = 'var(--primary-color)';
+                    }, 2000);
+                } else {
+                    this.innerHTML = '<i class="fas fa-check"></i> Já está nos Favoritos';
+                    this.style.backgroundColor = 'var(--secondary-color)';
+                    
+                    setTimeout(() => {
+                        this.innerHTML = '<i class="fas fa-heart"></i> Adicionar aos Favoritos';
+                        this.style.backgroundColor = 'var(--primary-color)';
+                    }, 2000);
+                }
+            });
+
+            // Inicia o carregamento dos dados
+            fetchBookDetails();
+        });
+    </script>
+</body>
+</html>

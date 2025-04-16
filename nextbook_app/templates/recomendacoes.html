@@ -21,9 +21,11 @@
   <div class="painel-titulos" style="background: radial-gradient(at 60% 80%, transparent 30%, rgba(0, 0, 0, 0.15) 90%, rgba(0, 0, 0, 0.1) 95%, rgba(0, 0, 0, 0) 100%) 100% 50% / cover, linear-gradient(rgb(0, 0, 0) 0%, transparent 90%);">
     
     <!-- Livros -->
-    <h1 class="titulos-titulo">
-      Livros 
-    </h1>  
+    <h2 class="titulos-titulo" style="color: white;">
+      <br>
+      Livros: 
+    </h2>
+    
     
     {% with livros=recomendados|dictsort:"tipo" %}
       {% if livros %}

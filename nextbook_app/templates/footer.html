@@ -2,21 +2,26 @@
 <footer class="text-center text-lg-start score-watch-footer">
   <div class="container text-center text-md-start mt-5">
     <div class="row mt-3">
+      <!-- Logo -->
       <div class="col-md-3 col-lg-4 col-xl-3 mx-auto mb-4">
         <h2 class="fw-bold mb-4">
           <a class="footer-brand" href="{% url 'home' %}">
-            <!-- Redimensionando a logo -->
-            <img src="{% static 'imgs/Logo.png' %}" alt="Logo" style="max-width: 150px; height: auto;">
+            <img src="{% static 'imgs/Logo.png' %}" alt="Logo Nextbook" class="img-fluid" style="max-width: 180px;">
           </a>
         </h2>
       </div>
+
+      <!-- Confira -->
       <div class="col-md-2 col-lg-2 col-xl-2 mx-auto mb-4">
         <h6 class="fw-bold mb-4">Confira</h6>
         <p>
           <a href="{% url 'recomendacoes' %}" class="text-reset">Recomendações</a><br>
-          <a href="{% url 'livros' %}" class="text-reset">Livros</a>
+          <a href="{% url 'livros' %}" class="text-reset">Livros</a><br>
+          <a href="{% url 'categorias' %}" class="text-reset">Categorias</a>
         </p>
       </div>
+
+      <!-- Links úteis -->
       <div class="col-md-2 col-lg-2 col-xl-2 mx-auto mb-4">
         <h6 class="fw-bold mb-4">Links úteis</h6>
         <p>
@@ -27,7 +32,8 @@
     </div>
   </div>
 
+  <!-- Copyright -->
   <div class="text-center p-4">
-    NextBook © 2025 Copyright
+    Nextbook © 2025 - Todos os direitos reservados
   </div>
 </footer>

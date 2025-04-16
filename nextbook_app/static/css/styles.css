@@ -3,6 +3,21 @@
     padding: 0;
     box-sizing: border-box;
 }
+.fade-in {
+    animation: fadeIn 0.8s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
 
 /* Estilos para a página de perfil */
 .favoritos-section {
@@ -111,18 +126,72 @@ p {
 
 
 /*FOOTER*/
-
-.score-watch-footer {
-    background: rgba(0, 0, 0, 0.7);
-    color: #fff;
-    backdrop-filter: blur(5px);
-    padding: 5px;
-    font-family: "Poppins"!important;
+.nextbook-footer {
+    background-color: #f4f4f4;
+    padding: 40px 20px 20px;
+    border-top: 1px solid #ddd;
+    font-family: Arial, sans-serif;
+    color: #333;
 }
 
+.footer-wrapper {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: flex-start;
+    max-width: 1200px;
+    margin: 0 auto;
+    gap: 30px;
+}
+
+.footer-section {
+    flex: 1;
+    min-width: 200px;
+}
+
+.footer-section.logo {
+    flex: 2;
+}
+
+.footer-logo {
+    max-width: 120px;
+    height: auto;
+    margin-bottom: 10px;
+}
+
+
+.footer-section h4 {
+    font-size: 16px;
+    font-weight: bold;
+    margin-bottom: 12px;
+}
+
+.footer-section a {
+    display: block;
+    text-decoration: none;
+    color: #333;
+    margin-bottom: 8px;
+    font-size: 14px;
+    transition: color 0.3s ease;
+}
+
+.footer-section a:hover {
+    color: #007bff;
+}
+
+.footer-bottom {
+    text-align: center;
+    margin-top: 30px;
+    font-size: 14px;
+    color: #777;
+}
 .footer-brand img {
+    max-width: 180px;
     width: 100%;
+    height: auto;
 }
+
+
 
 
 /* CADASTRO */
@@ -428,13 +497,14 @@ form button:hover {
     margin-bottom: 20px;
     padding: 10px;
     border: 1px solid #ddd;
-    background-color: #f9f9f9;
     width: 80%;
     margin: 10px auto;
     border-top-left-radius: 15px;
     border-top-right-radius: 15px;
     border-bottom-right-radius: 15px;
-    color: #000000;
+    background-color: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+    border-color: #4f46e5;
 }
 
 .comentario-info {

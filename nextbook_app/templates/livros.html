@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+{% load static %}
+<html>
+<head>
+    {% include 'head.html' %}
+    <title>NextBook :: Catálogo de Livros</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+        }
+        
+        .main-content {
+            margin-top: 80px; /* Espaço para o menu */
+            padding: 20px;
+            min-height: calc(100vh - 120px); /* Ajuste para o footer */
+        }
+        
+        header {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 1000;
+            background: white; 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+    <header>
+        {% include 'menu.html' %}
+    </header>
+
+    <div class="container main-content">
+        
+
+        <div class="filters">
+            <span>Filtrar por:</span>
+            <a href="?order=title" class="filter-btn">Título</a>
+            <a href="?order=-published_date" class="filter-btn">Mais Recentes</a>
+            <a href="?order=average_rating" class="filter-btn">Melhor Avaliados</a>
+        </div>
+
+        <div class="books-grid">
+            {% for livro in livros %}
+            <a href="{% url 'pagina_livro' livro_id=livro.id %}" class="book-card">
+                <div class="book-cover">
+                    <img src="{{ livro.volumeInfo.imageLinks.thumbnail }}" alt="{{ livro.volumeInfo.title }}">
+                    {% if livro.volumeInfo.averageRating %}
+                    <div class="rating-badge">
+                        {{ livro.volumeInfo.averageRating }} <i class="fas fa-star"></i>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="book-info">
+                    <h3>{{ livro.volumeInfo.title|truncatechars:30 }}</h3>
+                    <p class="author">por {{ livro.volumeInfo.authors|join:", "|truncatechars:30 }}</p>
+                    <p class="published-year">
+                        {{ livro.volumeInfo.publishedDate|slice:":4" }}
+                    </p>
+                </div>
+            </a>
+            {% empty %}
+            <div class="no-results">
+                <i class="fas fa-book-open"></i>
+                <p>Nenhum livro encontrado</p>
+            </div>
+            {% endfor %}
+        </div>
+
+        {% if is_paginated %}
+        <div class="pagination">
+            {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}" class="page-link">
+                <i class="fas fa-chevron-left"></i>
+            </a>
+            {% endif %}
+
+            <span class="current-page">
+                Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+            </span>
+
+            {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}" class="page-link">
+                <i class="fas fa-chevron-right"></i>
+            </a>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+
+    {% include 'footer.html' %}
+</body>
+</html>

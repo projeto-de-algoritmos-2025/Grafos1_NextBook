@@ -1,41 +1,33 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-    {% load static %}
     {% include 'head.html' %}
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <meta charset="UTF-8"/>
-    <title>Nextbook :: Cadastro</title>
-    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <title>NextBook :: Cadastro</title>
 </head>
 <body>
     {% include 'menu.html' %}
-
-    <div class="main-content">
-        <div class="container-cadastro-login" style="margin-top: 100px;">
+        <div class="container-cadastro-login">
             <form method="post">
                 {% csrf_token %}
                 <div class="head">
-                    <span>Cadastro</span>
-                    {% if erro %}
-                        <p style="color: #fff;">{{ erro }}</p>
-                    {% endif %}
+                    <span>Cadastre-se</span>
                 </div>
                 <div class="inputs">
-                    <input type="text" id="username" name="username" placeholder="Usuário" required><br>
-                    <input type="email" id="email" name="email" placeholder="E-mail" required><br>
-                    <input type="password" id="password" name="password" placeholder="Senha" required><br>
-                    <input type="password" id="confirm_password" name="confirm_password" placeholder="Confirmar Senha" required><br>
+                    <input type="name" name="first_name" placeholder="Nome" required>
+                    <input type="name" name="last_name" placeholder="Sobrenome" required>
+                    <input type="text" name="username" placeholder="Usuário" required>
+                    <input type="email" name="email" placeholder="E-mail" required><br>
+                    <input type="password" name="password" placeholder="Senha" required><br>
                 </div>
-                <button type="submit" style="margin-top: 10px;">Cadastrar</button>
+                <button type="submit" style="margin-top: 10px;">Registrar</button>
             </form>
             <div class="form-footer">
-                <p style="color:#000">Já possui uma conta? <a href="{% url 'login' %}">Faça login</a></p> 
+                <p style="color:#000">Já possui uma conta? <a href="{% url 'login' %}">Login</a></p> 
             </div>
-        </div>
-    </div>
-
+        </div>    
     {% include 'footer.html' %}
 </body>
 </html>

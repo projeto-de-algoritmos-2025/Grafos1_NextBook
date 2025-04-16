@@ -8,88 +8,50 @@
     <meta charset="UTF-8"/>
     <title>Nextbook</title>
 </head>
-<body style="background-color: var(--background); color: var(--text);">
+<body>
     {% include 'menu.html' %}
 
-    <!-- Carrossel com banner principal -->
-    <div id="carouselExampleIndicators" class="carousel slide" data-ride="carousel">
-        <div class="carousel-inner">
-            <div class="carousel-item active">
-                <!-- Adicione o banner principal aqui -->
-                <img class="d-block w-100" src="{% static 'imgs/banner-livros.png' %}" alt="Primeiro slide">
-            </div>
-            <!-- Slides dinâmicos (livros em destaque) -->
-            {% for livro in livros %}
-            <div class="carousel-item">
-                <a href="#">
-                    <img class="d-block img-carrossel" src="{{ livro.titulo.capaPath }}" alt="{{ livro.titulo.titulo }}">
-                </a>
-                <div class="carousel-caption d-none d-md-block">
-                    <a href="#">
-                        <h5>{{ livro.titulo.titulo }}</h5>
-                        <p><i class="fa-regular fa-calendar"></i> Publicado em: {{ livro.titulo.dt_publicacao.year }}</p>
-                        <p>{{ livro.titulo.sinopse|truncatewords:20 }}</p>
-                    </a>
-                </div>
-            </div>
-            {% endfor %}
+    <!-- Container principal com padding para compensar o menu fixo -->
+    <main class="main-content">
+        <!-- Carrossel com banner principal -->
+        <div id="carouselExampleIndicators" class="carousel slide" data-ride="carousel">
+            <!-- ... conteúdo do carrossel ... -->
         </div>
-        <a class="carousel-control-prev" href="#carouselExampleIndicators" role="button" data-slide="prev">
-            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-            <span class="sr-only">Anterior</span>
-        </a>
-        <a class="carousel-control-next" href="#carouselExampleIndicators" role="button" data-slide="next">
-            <span class="carousel-control-next-icon" aria-hidden="true"></span>
-            <span class="sr-only">Próximo</span>
-        </a>
-    </div>
 
-    <!-- Seção de botão personalizado -->
-    <div style="text-align: center; padding: 40px 10px 10px 0px;">  
-        <button class="btn" style="background-color: var(--primary); color: #fff;">
-            <a href="#" style="color: #fff; text-decoration: none;">Ver recomendações personalizadas</a>
-        </button>
-    </div>
+        <!-- Seção de botão personalizado -->
+        <div class="recommendation-section">
+            {% if user.is_authenticated %}
+            <a href="{% url 'recomendacoes' %}" class="btn btn-primary">Ver recomendações personalizadas</a>
+            {% else %}
+            <p class="login-prompt">Faça <a href="{% url 'login' %}">login</a> e veja livros recomendados especialmente para você!</p>
+            {% endif %}
+        </div>
 
-    <!-- Painel de livros populares -->
-    <div class="painel-titulos">
-        <h1 class="titulos-titulo">
-            Livros Populares 
-            <span><a class="ver-mais-titulos" href="#"><i class="fa-solid fa-angles-right"></i>Veja mais</a></span>
-        </h1>  
-        <!-- Livros dinâmicos -->
-        {% for livro in livros %}
-        <a href="#">
-            <div class="container-titulos">
-                <img class="image" src="{{ livro.titulo.capaPath }}" alt="{{ livro.titulo.titulo }}">
-                <div class="overlay">
-                    <p>{{ livro.titulo.titulo }}</p>
-                </div>
-            </div>  
-        </a>
-        {% endfor %}
-    </div>
-
-    <!-- Painel de categorias -->
-    <div class="painel-titulos">
-        <h1 class="titulos-titulo">
-            Gêneros em Destaque
-            <span><a class="ver-mais-titulos" href="#"><i class="fa-solid fa-angles-right"></i>Veja mais</a></span>
-        </h1> 
-        <!-- Gêneros estáticos (use categorias de livros, por exemplo) -->
-        {% for genero in generos %}
-        <a href="#">
-            <div class="container-titulos">
-                <img class="image" src="{% static 'imgs/genero1.png' %}" alt="{{ genero.nome_genero }}">
-                <div class="overlay">
-                    <p>{{ genero.nome_genero }}</p>
-                </div>
+        <!-- Painel de livros populares -->
+        <section class="popular-books">
+            <div class="section-header">
+                <h2>Livros Populares</h2>
+                <a href="{% url 'livros' %}" class="see-more">Veja mais <i class="fa-solid fa-angles-right"></i></a>
             </div>
-        </a>
-        {% endfor %}
-    </div>   
+            <div class="books-grid">
+                {% for livro in livros|slice:":6" %}
+                <a href="{% url 'pagina_livro' livro_id=livro.id %}" class="book-card">
+                    <img src="{{ livro.volumeInfo.imageLinks.thumbnail }}" alt="{{ livro.volumeInfo.title }}">
+                    <div class="book-overlay">
+                        <p>{{ livro.volumeInfo.title }}</p>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+        </section>
 
-    <br><br>
+        <!-- Painel de categorias -->
+        <section class="featured-genres">
+            <h2>Gêneros em Destaque</h2>
+            <!-- Adicione aqui os gêneros -->
+        </section>
+    </main>
+
     {% include 'footer.html' %}
 </body>
 </html>

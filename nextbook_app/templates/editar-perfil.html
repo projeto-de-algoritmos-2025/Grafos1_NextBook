@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    {% include 'head.html' %}
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta charset="UTF-8"/>
+    <title>NextBook :: Editar Perfil</title>
+</head>
+<body>
+    {% include 'menu.html' %}
+        <div class="container-cadastro-login">
+            <form method="post">
+                {% csrf_token %}
+                <div class="head">
+                    <span>Editar perfil</span>
+                </div>
+                <div class="inputs">
+                    <input type="name" id="first_name" name="first_name" placeholder="Nome" value="{{ user.first_name }}" required>
+                    <input type="name" id="last_name" name="last_name" placeholder="Sobrenome" value="{{ user.last_name }}" required>
+                    <input type="text" id="username" name="username" placeholder="Usuário" value="{{ user.username }}" required>
+                    <input type="email" id="email" name="email" placeholder="E-mail" value="{{ user.email }}" required>
+                    <input type="password" id="password" name="password" placeholder="Senha" value="" required>
+                </div>
+                <button type="submit">Atualizar</button>
+            </form>
+        </div>    
+    {% include 'footer.html' %}
+</body>
+</html>

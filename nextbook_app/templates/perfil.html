@@ -1,54 +1,58 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html>
 <head>
     {% include 'head.html' %}
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <meta charset="UTF-8"/>
-    <title>Nextbook :: Perfil</title>
+    <title>NextBook :: Perfil</title>
 </head>
 <body>
     {% include 'menu.html' %}
     
-    <div class="painel-container" style="margin-top: 5%;">
-        <div class="painel" style="text-align: left;">
+    <div class="painel-container" style="margin-top:5%">
+        <div class="painel">
             <div class="painel-header">Informações do usuário</div>
             <div class="painel-body">
                 <p class="perfil-p"><strong>Nome de Usuário:</strong> {{ username }}</p>
                 <p class="perfil-p"><strong>Email:</strong> {{ email }}</p>
                 <p class="perfil-p"><strong>Nome Completo:</strong> {{ nome_completo }}</p>
-                <div style="text-align: right; padding: 10px;">
-                    <button class="btn">
-                        <a style="color: #fff;" href="{% url 'editar-perfil' %}">Editar perfil</a>
-                    </button>
+                <div class="text-right py-3">
+                    <a href="{% url 'editar-perfil' %}" class="btn">
+                        <i class="fas fa-edit"></i> Editar perfil
+                    </a>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Seção de livros favoritos -->
-    <div style="display: block; margin-top: 30px;">
-        <h1 class="topico"><i class="far fa-heart"></i> Seus Livros Favoritos</h1>
-        <div>
+    <!-- Seção de favoritos -->
+    <div class="favoritos-section">
+        <h1 class="topico"><i class="far fa-heart"></i> Seus Favoritos</h1>
+        <div class="favoritos-content">
             {% if favoritos %}
                 <div class="favoritos-list">
                     {% for favorito in favoritos %}
-                        <a href="{% url 'pagina_livro' url_slug=favorito.livro.slug %}">
+                        <a href="{% url 'pagina-livros' url_slug=favorito.titulo.slug %}" class="favorito-item">
                             <div class="container-titulos">
-                                <img class="image" src="{{ favorito.livro.capa_url }}" alt="{{ favorito.livro.titulo }} - Capa">
+                                <img class="image" src="{{ favorito.titulo.capaPath }}" alt="{{ favorito.titulo.titulo }} - Capa">
                                 <div class="overlay">
-                                    <p>{{ favorito.livro.titulo }}</p>
+                                    <p>{{ favorito.titulo.titulo }}</p>
                                 </div>
-                            </div>
+                            </div>  
                         </a>
                     {% endfor %}
                 </div>
             {% else %}
-                <p style="text-align:center">Nenhum livro favorito ainda.</p><br><br><br>
+                <p class="no-favorites text-center py-4">Nenhum livro favorito ainda.</p>
             {% endif %}
         </div>
     </div>
 
     {% include 'footer.html' %}
+    
+    <!-- Scripts JS -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 </body>
 </html>

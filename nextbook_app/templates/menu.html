@@ -1,42 +1,39 @@
 <!-- MENU -->
 {% load static %}
-<nav class="navbar navbar-expand-lg navbar-dark fixed-top">
-    <a class="navbar-brand" href="{% url 'home' %}"><img src="{% static 'imgs/logo2.png' %}" alt="Logo" style="height: 40px;"></a>
-    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-        <i style="color: #fff; font-size: 25px;" class="fa-solid fa-bars"></i>
+<nav class="navbar fixed-top navbar-expand-lg navbar-dark">
+    <a class="navbar-brand" href="{% url 'home' %}">
+        <img src="{% static 'imgs/Logo.png' %}" alt="Logo" style="height: 40px; width: auto;">
+    </a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+        <i style="color:#fff; font-size: 25px;" class="fa-solid fa-bars"></i>
     </button>
-    <div class="collapse navbar-collapse" id="navbarNav">
-        <ul class="navbar-nav ml-auto">
-            <li class="nav-item">
-                <a class="nav-link" href="{% url 'home' %}">Início</a> 
-            </li>
-            <li class="nav-item">
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+        <ul class="navbar-nav mr-auto">
+            <li>
                 <a class="nav-link" href="{% url 'recomendacoes' %}">Recomendações</a> 
             </li>
-            <li class="nav-item">
+            <li>
                 <a class="nav-link" href="{% url 'livros' %}">Livros</a> 
             </li>
-            <li class="nav-item">
-                <a class="nav-link" href="{% url 'categorias' %}">Categorias</a> 
-            </li>
+           
             {% if user.is_authenticated %}
             <li class="nav-item dropdown">
                 <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                     {{ user.username }}
                 </a>
                 <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-                    <a class="dropdown-item" href="{% url 'perfil' %}">Meu perfil</a>
+                    <a class="dropdown-item" href="{% url 'perfil' %}">Meu perfil</a>                  
                     <a class="dropdown-item" href="{% url 'logout' %}">Sair</a>
                 </div>
             </li>
             {% else %}
-            <li class="nav-item">
+            <li>
                 <a class="nav-link" href="{% url 'login' %}">Login</a> 
             </li>
             {% endif %}
         </ul>
     </div>
-</nav>
+</nav><br><br>
 
 <div id="loader">
     <div class="spinner-border text-white" role="status">
@@ -45,16 +42,26 @@
 </div>
 
 <style>
-#loader {
-    position: fixed;
-    z-index: 9999;
-    background: rgba(7, 6, 20, 0.7); /* Cor escura com leve transparência */
-    width: 100%;
-    height: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
+    .navbar-brand img {
+        height: 40px; /* Ajuste este valor conforme necessário */
+        width: auto;
+        transition: all 0.3s ease; /* Adiciona transição suave */
+    }
+    
+    .navbar-brand img:hover {
+        transform: scale(1.05); /* Efeito de hover sutil */
+    }
+
+    #loader {
+        position: fixed;
+        z-index: 99999;
+        background: #070614;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
 </style>
 
 <script>
@@ -62,6 +69,6 @@
         setTimeout(function() {
             var loader = document.getElementById('loader');
             loader.style.display = 'none';
-        }, 1000); // Delay de 1 segundo para esconder o loader
+        }, 1000);
     });
 </script>

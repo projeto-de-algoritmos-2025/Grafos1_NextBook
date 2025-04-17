@@ -10,8 +10,10 @@ import requests
 from django.core.exceptions import ImproperlyConfigured
 from django.core.paginator import Paginator
 import random
-from datetime import datetime
 from django.views.decorators.http import require_POST
+from .models import Livro, Perfil 
+from django.views.decorators.csrf import csrf_exempt
+
 
 
 def home(request):
@@ -262,6 +264,31 @@ def adicionar_favorito(request, livro_id):
             'success': False,
             'error': str(e)
         }, status=500)
+@require_POST
+@csrf_exempt
+def favoritar_livro(request, livro_id):
+    livro = Livro.objects.get(id=livro_id)
+    perfil = Perfil.objects.get(user=request.user)
+
+    perfil.livros_favoritos.add(livro)
+
+    if request.user.is_authenticated:
+        try:
+            livro = Livro.objects.get(id=livro_id)
+            favorito, created = Favorito.objects.get_or_create(
+                usuario=request.user,
+                livro=livro
+            )
+            
+            if not created:
+                favorito.delete()
+                return JsonResponse({'success': True, 'action': 'removed'})
+            
+            return JsonResponse({'success': True, 'action': 'added'})
+        except Livro.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'Livro não encontrado'})
+
+    return JsonResponse({'success': False, 'error': 'Usuário não autenticado'})
 
 def buscar_similares(request, livro_id):
     try:

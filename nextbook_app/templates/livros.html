@@ -59,7 +59,6 @@
             overflow: hidden;
             transition: all 0.3s;
             border: 1px solid rgba(108, 92, 231, 0.3);
-            text-decoration: none;
             color: white;
             display: block;
             height: 100%;
@@ -172,6 +171,35 @@
             text-align: center;
             padding: 2rem;
         }
+        .favorite-heart {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: #fd79a8; /* Cor normal */
+            background-color: rgba(0, 0, 0, 0.7);
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 2;
+            transition: all 0.3s;
+        }
+
+        .favorite-heart:hover {
+            transform: scale(1.2);
+            color: #ff0000; /* Cor ao passar o mouse */
+        }
+
+        .favorite-heart.favorited {
+            color: #ff0000; /* Cor quando favoritado */
+        }
+
+        .book-cover {
+            position: relative; /* posicionar o coração */
+        }
         
         @media (max-width: 768px) {
             .books-grid {
@@ -206,6 +234,7 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            const urlLivros = "{% url 'livros' %}";
             const params = new URLSearchParams(window.location.search);
             const order = params.get('order');
             
@@ -218,13 +247,41 @@
                 });
             }
             
-            // Força recarregamento completo ao clicar em Aleatórios
-            document.querySelector('a[href="{% url 'livros' %}"]').addEventListener('click', function(e) {
+            document.querySelector(`a[href="${urlLivros}"]`).addEventListener('click', function(e) {
                 e.preventDefault();
-                window.location.href = "{% url 'livros' %}?random=" + new Date().getTime();
+                window.location.href = `${urlLivros}?random=${new Date().getTime()}`;
+            });
+            document.querySelectorAll('.favorite-heart').forEach(heart => {
+                heart.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    const livroId = this.getAttribute('data-livro-id');
+                    const isFavorited = this.classList.contains('favorited');
+                    
+                    fetch(`/favoritar_livro/${livroId}/`, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRFToken': '{{ csrf_token }}',
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            favoritar: !isFavorited
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            this.classList.toggle('favorited');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                    });
+                });
             });
         });
-        </script>
+    </script>
 
     {% include 'menu.html' %}
 
@@ -244,50 +301,60 @@
 
             <div class="books-grid">
                 {% for livro in livros %}
-                <a href="{% url 'pagina_livro' livro_id=livro.id %}" class="book-card">
-                    <div class="book-cover">
-                        {% if livro.volumeInfo.imageLinks and livro.volumeInfo.imageLinks.thumbnail %}
-                            <img src="{{ livro.volumeInfo.imageLinks.thumbnail }}" 
-                                 alt="{{ livro.volumeInfo.title }}"
-                                 onerror="this.onerror=null;this.src='{% static 'imgs/book-placeholder.png' %}'">
-                        {% else %}
-                            <img src="{% static 'imgs/book-placeholder.png' %}" 
-                                 alt="Capa não disponível">
-                        {% endif %}
+                
+                <div class="book-card">
+                    <a href="{% url 'pagina_livro' livro_id=livro.id %}">
+                        <div class="book-cover">
+                            <div class="favorite-heart" data-livro-id="{{ livro.id }}">
+                                <i class="fas fa-heart"></i>
+                            </div>
+                            
+                            {% if livro.volumeInfo.imageLinks and livro.volumeInfo.imageLinks.thumbnail %}
+                            <img src="{{ livro.volumeInfo.imageLinks.thumbnail }}" alt="{{ livro.volumeInfo.title }}">
+                            {% else %}
+                                <img src="{% static 'imgs/book-placeholder.png' %}" 
+                                     alt="Capa não disponível">
+                            {% endif %}
 
-                        {% if livro.volumeInfo.averageRating %}
-                        <div class="rating-badge">
-                            {{ livro.volumeInfo.averageRating|floatformat:1 }} <i class="fas fa-star"></i>
+                            {% if livro.volumeInfo.averageRating %}
+                            <div class="rating-badge">
+                                {{ livro.volumeInfo.averageRating|floatformat:1 }} <i class="fas fa-star"></i>
+                            </div>
+                            {% endif %}
                         </div>
-                        {% endif %}
-                    </div>
-                    <div class="book-info">
-                        <h3>{{ livro.volumeInfo.title|default:"Título desconhecido" }}</h3>
-                        <p class="author">
-                            {% if livro.volumeInfo.authors %}
-                                por {{ livro.volumeInfo.authors|join:", "|truncatechars:30 }}
-                            {% else %}
-                                Autor desconhecido
-                            {% endif %}
-                        </p>
-                        <p class="language">
-                            {% if livro.volumeInfo.language %}
-                                {% if livro.volumeInfo.language == 'pt' %}
-                                    Português
+                        <div class="book-info">
+                            <h3>{{ livro.volumeInfo.title|default:"Título desconhecido" }}</h3>
+                            <p class="author">
+                                {% if livro.volumeInfo.authors %}
+                                    por {{ livro.volumeInfo.authors|join:", "|truncatechars:30 }}
                                 {% else %}
-                                    {{ livro.volumeInfo.language|upper }}
+                                    Autor desconhecido
                                 {% endif %}
-                            {% endif %}
-                        </p>
-                        <p class="published-year">
-                            {% if livro.volumeInfo.publishedDate %}
-                                {{ livro.volumeInfo.publishedDate|slice:":4" }}
-                            {% else %}
-                                Ano desconhecido
-                            {% endif %}
-                        </p>
+                            </p>
+                            <p class="language">
+                                {% if livro.volumeInfo.language %}
+                                    {% if livro.volumeInfo.language == 'pt' %}
+                                        Português
+                                    {% else %}
+                                        {{ livro.volumeInfo.language|upper }}
+                                    {% endif %}
+                                {% endif %}
+                            </p>
+                            <p class="published-year">
+                                {% if livro.volumeInfo.publishedDate %}
+                                    {{ livro.volumeInfo.publishedDate|slice:":4" }}
+                                {% else %}
+                                    Ano desconhecido
+                                {% endif %}
+                            </p>
+                        </div>
+                    </a>
+                    <div style="padding: 0 1rem 1rem 1rem;">
+                        <a href="{% url 'favoritar_livro' livro.id %}" class="favorite-button">
+                            <i class="fas fa-heart"></i> Favoritar
+                        </a>
                     </div>
-                </a>
+                </div>
                 {% empty %}
                 <div class="no-results">
                     <i class="fas fa-book-open fa-3x"></i>
@@ -353,3 +420,6 @@
     </script>
 </body>
 </html>
+
+
+

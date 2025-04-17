@@ -1,5 +1,5 @@
 from django import forms
-from .models import Avaliacao, Comentario
+from .models import Avaliacao, Comentario, Livro
 
 class AvaliacaoForm(forms.ModelForm):
     class Meta:
@@ -16,3 +16,6 @@ class ComentarioForm(forms.ModelForm):
         labels = {
             'texto': 'Seu comentário',
         }
+
+class FavoritarLivroForm(forms.Form):
+    livro = forms.ModelChoiceField(queryset=Livro.objects.all())

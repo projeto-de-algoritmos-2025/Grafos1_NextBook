@@ -2,6 +2,7 @@ from django.db import models
 from django.conf import settings
 from django.utils.text import slugify
 from django.core.validators import MinValueValidator, MaxValueValidator
+from django.contrib.auth.models import User
 
 class Genero(models.Model):
     """Modelo para categorias/gêneros de livros"""
@@ -68,58 +69,6 @@ class Livro(models.Model):
         """Retorna uma lista de gêneros"""
         return [genero.nome for genero in self.generos.all()]
 
-
-class Favorito(models.Model):
-    """Modelo para livros favoritados pelos usuários"""
-    usuario = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        related_name='favoritos'
-    )
-    livro = models.ForeignKey(
-        Livro,
-        on_delete=models.CASCADE,
-        related_name='favoritado_por'
-    )
-    criado_em = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        unique_together = ('usuario', 'livro')
-        verbose_name = "Favorito"
-        verbose_name_plural = "Favoritos"
-        ordering = ['-criado_em']
-
-    def __str__(self):
-        return f"{self.usuario.username} - {self.livro.titulo}"
-
-
-class PreferenciaGenero(models.Model):
-    """Modelo para gêneros preferidos dos usuários"""
-    usuario = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        related_name='generos_preferidos'
-    )
-    genero = models.ForeignKey(
-        Genero,
-        on_delete=models.CASCADE,
-        related_name='preferido_por'
-    )
-    peso = models.PositiveSmallIntegerField(
-        default=1,
-        validators=[MinValueValidator(1), MaxValueValidator(10)]
-    )
-    criado_em = models.DateTimeField(auto_now_add=True)
-    atualizado_em = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        unique_together = ('usuario', 'genero')
-        verbose_name = "Preferência de Gênero"
-        verbose_name_plural = "Preferências de Gênero"
-        ordering = ['-peso', 'genero__nome']
-
-    def __str__(self):
-        return f"{self.usuario.username} - {self.genero.nome} (peso: {self.peso})"
 
 
 class Avaliacao(models.Model):

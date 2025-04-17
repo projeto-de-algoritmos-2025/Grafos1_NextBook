@@ -7,12 +7,11 @@ from django.conf import settings
 from django.core.cache import cache
 from django.views.decorators.cache import cache_page
 import requests
-from .models import Favorito  
 from django.core.exceptions import ImproperlyConfigured
 from django.core.paginator import Paginator
 import random
 from datetime import datetime
-
+from django.views.decorators.http import require_POST
 
 
 def home(request):
@@ -183,14 +182,18 @@ def recomendacoes(request):
 def pagina_livro(request, livro_id):
     return pagina_livros(request, livro_id)
 
-@cache_page(60 * 15) 
+
+@cache_page(60 * 15)  # Cache de 15 minutos
 def pagina_livros(request, livro_id):
-    
-    if not hasattr(settings, 'GOOGLE_BOOKS_API_KEY') or not settings.GOOGLE_BOOKS_API_KEY:
+    """
+    View para exibir detalhes de um livro específico
+    """
+    # Verifica se a API key está configurada
+    if not getattr(settings, 'GOOGLE_BOOKS_API_KEY', None):
         raise ImproperlyConfigured("GOOGLE_BOOKS_API_KEY não está configurada no settings.py")
     
-    # Busca na API do Google Books
     try:
+        # Busca na API do Google Books
         response = requests.get(
             f'https://www.googleapis.com/books/v1/volumes/{livro_id}',
             params={'key': settings.GOOGLE_BOOKS_API_KEY}
@@ -203,56 +206,62 @@ def pagina_livros(request, livro_id):
     volume_info = livro_data.get('volumeInfo', {})
     sale_info = livro_data.get('saleInfo', {})
 
-    # Verifica se o livro está nos favoritos do usuário
     esta_favorito = False
-    if request.user.is_authenticated and hasattr(request.user, 'favorito_set'):
+    if request.user.is_authenticated:
         esta_favorito = request.user.favorito_set.filter(livro_google_id=livro_id).exists()
 
     context = {
         'livro_id': livro_id,
-        'titulo': volume_info.get('title', 'Título desconhecido'),
+        'volumeInfo': volume_info, 
+        'saleInfo': sale_info,
+        'esta_favorito': esta_favorito,
         'autores': ', '.join(volume_info.get('authors', ['Autor desconhecido'])),
-        'descricao': volume_info.get('description', 'Descrição não disponível.'),
-        'capa': volume_info.get('imageLinks', {}).get('thumbnail', ''),
-        'editora': volume_info.get('publisher', 'Editora desconhecida'),
-        'data_publicacao': volume_info.get('publishedDate', ''),
-        'paginas': volume_info.get('pageCount', 0),
         'categorias': ', '.join(volume_info.get('categories', ['Sem categoria'])),
-        'idioma': volume_info.get('language', ''),
         'isbn': next(
             (id['identifier'] for id in volume_info.get('industryIdentifiers', []) 
-             if id['type'] == 'ISBN_13'), ''),
-        'avaliacao': volume_info.get('averageRating', 0),
-        'contagem_avaliacoes': volume_info.get('ratingsCount', 0),
-        'link_compra': sale_info.get('buyLink', volume_info.get('infoLink', '#')),
-        'esta_favorito': esta_favorito
+            if id['type'] == 'ISBN_13'), ''),
     }
 
     return render(request, 'pagina_livro.html', context)
 
+@require_POST
 @login_required
 def adicionar_favorito(request, livro_id):
-    if request.method == 'POST':
+    try:
+        # Obter dados adicionais do livro do corpo da requisição
+        data = json.loads(request.body)
+        titulo = data.get('titulo', '')
+        autor = data.get('autor', '')
+        capa_url = data.get('capa_url', '')
+        
         # Verifica se já é favorito
         favorito, created = Favorito.objects.get_or_create(
             usuario=request.user,
-            livro_google_id=livro_id
+            livro_google_id=livro_id,
+            defaults={
+                'titulo': titulo,
+                'autor': autor,
+                'capa_url': capa_url
+            }
         )
         
         if not created:
             favorito.delete()
-            adicionado = False
+            action = 'removed'
         else:
-            adicionado = True
+            action = 'added'
 
-        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-            return JsonResponse({
-                'status': 'success',
-                'adicionado': adicionado,
-                'contagem': request.user.favorito_set.count()
-            })
+        return JsonResponse({
+            'success': True,
+            'action': action,
+            'contagem': request.user.favorito_set.count()
+        })
     
-    return redirect('pagina_livro', livro_id=livro_id)
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
 
 def buscar_similares(request, livro_id):
     try:

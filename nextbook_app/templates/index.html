@@ -14,6 +14,11 @@
             padding: 3rem 0;
             margin: 2rem 0;
         }
+        .book-carousel {
+            background-color: #1a1a2e;
+            padding: 3rem 0;
+            margin: 2rem 0;
+        }
         
         .carousel-item {
             min-height: 400px; 
@@ -129,6 +134,7 @@
                 overflow-y: visible;
             }
         }
+    
     </style>
 </head>
 <body>
@@ -138,8 +144,6 @@
         <!-- Carrossel de Livros -->
         <section class="book-carousel">
             <div id="featuredBooksCarousel" class="carousel slide" data-bs-ride="carousel">
-                
-                
                 <div class="carousel-inner" id="carouselBooksContainer">
                     <!-- Os itens do carrossel serão preenchidos via JavaScript -->
                     <div class="carousel-item active text-center py-5">
@@ -202,8 +206,10 @@
                         }
                         
                         const thumbnail = volumeInfo.imageLinks?.thumbnail || '{% static "imgs/book-placeholder.png" %}';
+                        
+                        // CORREÇÃO AQUI: Use bookData.id em vez de livro.id
                         const bookLink = `/livro/${bookData.id}/`;
-                                                
+                        
                         // HTML do item do carrossel
                         carouselItem.innerHTML = `
                             <div class="carousel-book">
@@ -214,7 +220,7 @@
                                     <h3 class="carousel-book-title">${title}</h3>
                                     <p class="carousel-book-author">${authors}</p>
                                     <p class="carousel-book-description">${description}</p>
-                                    <a href="${bookLink}" class="carousel-book-link">Ver detalhes</a>
+                                    <a href="/livro/${bookData.id}/" class="carousel-book-link">Ver detalhes</a>                                
                                 </div>
                             </div>
                         `;
@@ -238,7 +244,6 @@
                 }
             }
             
-            // Chama a função para carregar os livros
             fetchFeaturedBooks();
         });
     </script>

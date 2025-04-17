@@ -23,17 +23,27 @@ class Genero(models.Model):
         return self.nome
 
 
+class Perfil(models.Model):
+    user= models.OneToOneField(User, on_delete=models.CASCADE)
+    livros_favoritos = models.ManyToManyField('Livro', related_name='favorito_por', blank=True)
+
+
+    def __str__(self):
+        return self.user.username
+
 class Livro(models.Model):
     """Modelo principal para livros, integrado com a API do Google Books"""
     google_id = models.CharField(max_length=50, unique=True, verbose_name="ID do Google Books")
     titulo = models.CharField(max_length=200)
     slug = models.SlugField(max_length=200, unique=True)
+    autor = models.CharField(max_length=200)
     autores = models.TextField(help_text="Nomes dos autores separados por vírgula")
     descricao = models.TextField(blank=True, null=True)
     editora = models.CharField(max_length=100, blank=True, null=True)
     data_publicacao = models.DateField(blank=True, null=True)
     paginas = models.PositiveIntegerField(blank=True, null=True)
     capa_url = models.URLField(max_length=500, blank=True, null=True)
+    imagem = models.ImageField(upload_to='livros/')
     idioma = models.CharField(max_length=10, blank=True, null=True)
     isbn = models.CharField(max_length=20, blank=True, null=True, verbose_name="ISBN")
     avaliacao_media = models.FloatField(

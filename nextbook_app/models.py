@@ -31,9 +31,19 @@ class Perfil(models.Model):
     def __str__(self):
         return self.user.username
 
+
+class Favorito(models.Model):
+    usuario = models.ForeignKey(User, on_delete=models.CASCADE)
+    livro = models.ForeignKey("Livro", on_delete=models.CASCADE)
+    data_criacao = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('usuario', 'livro')
+        verbose_name_plural = 'Favoritos'
+
 class Livro(models.Model):
     """Modelo principal para livros, integrado com a API do Google Books"""
-    google_id = models.CharField(max_length=50, unique=True, verbose_name="ID do Google Books")
+    google_id = models.CharField(max_length=255, unique=True)
     titulo = models.CharField(max_length=200)
     slug = models.SlugField(max_length=200, unique=True)
     autor = models.CharField(max_length=200)
@@ -78,33 +88,3 @@ class Livro(models.Model):
     def lista_generos(self):
         """Retorna uma lista de gêneros"""
         return [genero.nome for genero in self.generos.all()]
-
-
-
-class Avaliacao(models.Model):
-    """Modelo para avaliações de livros pelos usuários"""
-    usuario = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        related_name='avaliacoes'
-    )
-    livro = models.ForeignKey(
-        Livro,
-        on_delete=models.CASCADE,
-        related_name='avaliacoes'
-    )
-    nota = models.PositiveSmallIntegerField(
-        validators=[MinValueValidator(1), MaxValueValidator(5)]
-    )
-    comentario = models.TextField(blank=True, null=True)
-    criado_em = models.DateTimeField(auto_now_add=True)
-    atualizado_em = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        unique_together = ('usuario', 'livro')
-        verbose_name = "Avaliação"
-        verbose_name_plural = "Avaliações"
-        ordering = ['-criado_em']
-
-    def __str__(self):
-        return f"{self.usuario.username} - {self.livro.titulo} ({self.nota}/5)"

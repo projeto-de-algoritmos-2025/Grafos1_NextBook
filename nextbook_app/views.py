@@ -57,13 +57,11 @@ def realizar_login(request):
 @login_required
 def perfil(request):
     usuario = request.user
-    favoritos = Favorito.objects.filter(usuario=usuario) if hasattr(usuario, 'favorito_set') else None
 
     context = {
         'username': usuario.username,
         'email': usuario.email,
         'nome_completo': f"{usuario.first_name} {usuario.last_name}",
-        'favoritos': favoritos,
     }
 
     return render(request, 'perfil.html', context)
@@ -90,6 +88,40 @@ def editar_perfil(request):
 def realizar_logout(request):
     logout(request)
     return redirect('login')
+
+
+def pagina_livro(request, livro_id):
+    print(f"ID do livro recebido: {livro_id}")  # Debug
+    
+    try:
+        api_url = f"https://www.googleapis.com/books/v1/volumes/{livro_id}"
+        print(f"URL da API: {api_url}")  # Debug
+        
+        response = requests.get(api_url)
+        print(f"Status code: {response.status_code}")  # Debug
+        
+        response.raise_for_status()
+        
+        livro_api = response.json()
+        google_id = livro_api.get('id')
+        titulo = livro_api.get('volumeInfo', {}).get('title', 'Título não encontrado')
+        print(f"Dados recebidos: {titulo}")  # Debug
+        
+        try:
+            livro = Livro.objects.get(google_id=google_id)
+        except Livro.DoesNotExist:
+            livro = None
+    
+    except requests.exceptions.RequestException as e:
+        print(f"Erro ao acessar a API: {e}")
+        livro = None
+    
+    context = {
+        'livro': livro,
+    }
+    
+    return render(request, 'pagina_livro.html', context)
+
 
 def livros(request):
     """View para listagem de livros com opções de ordenação e fallback para mock"""
@@ -180,169 +212,29 @@ def categorias(request):
 def recomendacoes(request):
     return render(request, 'recomendacoes.html', {})
 
-@cache_page(60 * 15)
-def pagina_livro(request, livro_id):
-    return pagina_livros(request, livro_id)
 
-
-@cache_page(60 * 15)  # Cache de 15 minutos
-def pagina_livros(request, livro_id):
-    """
-    View para exibir detalhes de um livro específico
-    """
-    # Verifica se a API key está configurada
-    if not getattr(settings, 'GOOGLE_BOOKS_API_KEY', None):
-        raise ImproperlyConfigured("GOOGLE_BOOKS_API_KEY não está configurada no settings.py")
-    
-    try:
-        # Busca na API do Google Books
-        response = requests.get(
-            f'https://www.googleapis.com/books/v1/volumes/{livro_id}',
-            params={'key': settings.GOOGLE_BOOKS_API_KEY}
-        )
-        response.raise_for_status()
-        livro_data = response.json()
-    except requests.RequestException as e:
-        raise Http404("Livro não encontrado")
-
-    volume_info = livro_data.get('volumeInfo', {})
-    sale_info = livro_data.get('saleInfo', {})
-
-    esta_favorito = False
-    if request.user.is_authenticated:
-        esta_favorito = request.user.favorito_set.filter(livro_google_id=livro_id).exists()
-
-    context = {
-        'livro_id': livro_id,
-        'volumeInfo': volume_info, 
-        'saleInfo': sale_info,
-        'esta_favorito': esta_favorito,
-        'autores': ', '.join(volume_info.get('authors', ['Autor desconhecido'])),
-        'categorias': ', '.join(volume_info.get('categories', ['Sem categoria'])),
-        'isbn': next(
-            (id['identifier'] for id in volume_info.get('industryIdentifiers', []) 
-            if id['type'] == 'ISBN_13'), ''),
-    }
-
-    return render(request, 'pagina_livro.html', context)
 
 @require_POST
 @login_required
-def adicionar_favorito(request, livro_id):
-    try:
-        # Obter dados adicionais do livro do corpo da requisição
-        data = json.loads(request.body)
-        titulo = data.get('titulo', '')
-        autor = data.get('autor', '')
-        capa_url = data.get('capa_url', '')
-        
-        # Verifica se já é favorito
-        favorito, created = Favorito.objects.get_or_create(
-            usuario=request.user,
-            livro_google_id=livro_id,
-            defaults={
-                'titulo': titulo,
-                'autor': autor,
-                'capa_url': capa_url
-            }
-        )
-        
-        if not created:
-            favorito.delete()
-            action = 'removed'
-        else:
-            action = 'added'
-
-        return JsonResponse({
-            'success': True,
-            'action': action,
-            'contagem': request.user.favorito_set.count()
-        })
-    
-    except Exception as e:
-        return JsonResponse({
-            'success': False,
-            'error': str(e)
-        }, status=500)
-@require_POST
-@csrf_exempt
 def favoritar_livro(request, livro_id):
-    livro = Livro.objects.get(id=livro_id)
-    perfil = Perfil.objects.get(user=request.user)
-
-    perfil.livros_favoritos.add(livro)
-
-    if request.user.is_authenticated:
-        try:
-            livro = Livro.objects.get(id=livro_id)
-            favorito, created = Favorito.objects.get_or_create(
-                usuario=request.user,
-                livro=livro
-            )
-            
-            if not created:
-                favorito.delete()
-                return JsonResponse({'success': True, 'action': 'removed'})
-            
-            return JsonResponse({'success': True, 'action': 'added'})
-        except Livro.DoesNotExist:
-            return JsonResponse({'success': False, 'error': 'Livro não encontrado'})
-
-    return JsonResponse({'success': False, 'error': 'Usuário não autenticado'})
-
-def buscar_similares(request, livro_id):
     try:
-        # Primeiro busca as categorias do livro atual
-        livro_response = requests.get(
-            f'https://www.googleapis.com/books/v1/volumes/{livro_id}',
-            params={'key': settings.GOOGLE_BOOKS_API_KEY}
-        )
-        livro_response.raise_for_status()
-        livro_data = livro_response.json()
-        
-        categorias = livro_data.get('volumeInfo', {}).get('categories', ['general'])
-        categoria_principal = categorias[0]
-
-        # Busca livros similares
-        response = requests.get(
-            'https://www.googleapis.com/books/v1/volumes',
-            params={
-                'q': f'subject:{categoria_principal}',
-                'maxResults': 4,
-                'key': settings.GOOGLE_BOOKS_API_KEY
-            }
-        )
-        response.raise_for_status()
-        data = response.json()
-
-        # Filtra para não incluir o livro atual
-        similares = [
-            livro for livro in data.get('items', []) 
-            if livro['id'] != livro_id
-        ][:3]  # Limita a 3 resultados
-
-        # Prepara os dados para o template
-        livros_similares = []
-        for livro in similares:
-            volume_info = livro.get('volumeInfo', {})
-            livros_similares.append({
-                'id': livro['id'],
-                'titulo': volume_info.get('title', 'Título desconhecido'),
-                'autor': volume_info.get('authors', ['Autor desconhecido'])[0],
-                'capa': volume_info.get('imageLinks', {}).get('thumbnail', '')
-            })
-
-        return JsonResponse({
-            'status': 'success',
-            'livros': livros_similares
-        })
-
-    except requests.RequestException as e:
-        return JsonResponse({
-            'status': 'error',
-            'message': str(e)
-        }, status=500)
- # views.py
+        if request.POST.get('favoritar') == 'true':
+            # Adicionar aos favoritos
+            Favorito.objects.get_or_create(
+                usuario=request.user,
+                livro_id=livro_id
+            )
+        else:
+            # Remover dos favoritos
+            Favorito.objects.filter(
+                usuario=request.user,
+                livro_id=livro_id
+            ).delete()
+            
+        return JsonResponse({'success': True})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+    
 def livros_debug(request):
     livros = [
         {

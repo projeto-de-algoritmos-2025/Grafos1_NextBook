@@ -64,12 +64,7 @@
             height: 100%;
         }
         
-        .book-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
-            border-color: #6c5ce7;
-        }
-        
+    
         .book-cover {
             height: 250px;
             display: flex;
@@ -157,10 +152,7 @@
             align-items: center;
             gap: 5px;
         }
-        
-        .page-link:hover {
-            background-color: #5649c0;
-        }
+       
         
         .current-page {
             padding: 8px 16px;
@@ -297,6 +289,8 @@
                 <a href="?order=title" class="filter-btn">Título</a>
                 <a href="?order=-published_date" class="filter-btn">Mais Recentes</a>
                 <a href="{% url 'livros' %}" class="filter-btn">Aleatórios</a>
+            
+
             </div>
 
             <div class="books-grid">
@@ -349,11 +343,9 @@
                             </p>
                         </div>
                     </a>
-                    <div style="padding: 0 1rem 1rem 1rem;">
-                        <a href="{% url 'favoritar_livro' livro.id %}" class="favorite-button">
-                            <i class="fas fa-heart"></i> Favoritar
-                        </a>
-                    </div>
+                    
+                    
+                    
                 </div>
                 {% empty %}
                 <div class="no-results">
@@ -387,37 +379,6 @@
     </main>
 
     {% include 'footer.html' %}
-
-    <!-- Font Awesome -->
-    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
-
-    <!-- Fallback JS -->
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            // Fallback para imagens
-            document.querySelectorAll('.book-cover img').forEach(img => {
-                img.addEventListener('error', function () {
-                    this.onerror = null;
-                    this.src = "{% static 'imgs/book-placeholder.png' %}";
-                });
-            });
-
-            // Fallback se nada for carregado
-            const booksGrid = document.querySelector('.books-grid');
-            if (booksGrid && !booksGrid.querySelector('.book-card') && !booksGrid.querySelector('.no-results')) {
-                booksGrid.innerHTML = `
-                    <div class="no-results">
-                        <i class="fas fa-exclamation-triangle fa-3x"></i>
-                        <p>Não foi possível carregar os livros</p>
-                        <p>Por favor, tente novamente mais tarde</p>
-                        <button onclick="window.location.reload()" class="filter-btn">
-                            <i class="fas fa-sync-alt"></i> Recarregar
-                        </button>
-                    </div>
-                `;
-            }
-        });
-    </script>
 </body>
 </html>
 

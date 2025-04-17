@@ -1,165 +1,70 @@
 <!DOCTYPE html>
-{% load static %}
 <html lang="pt-br">
 <head>
+    {% load static %}
     {% include 'head.html' %}
-    <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Perfil - Nextbook</title>
-    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta charset="UTF-8"/>
+    <title>NextBook :: Perfil</title>
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
     <style>
-        :root {
-            --primary-color: #6c5ce7;
-            --primary-hover: #5649c0;
-            --secondary-color: #00cec9;
-            --dark-bg: #1a1a2e;
-            --darker-bg: #16213e;
-            --text-color: #f8f9fa;
-            --text-secondary: #b8c2cc;
-        }
-
         .profile-container {
-            background-color: var(--dark-bg);
-            color: var(--text-color);
-            min-height: 100vh;
-            padding-top: 80px;
+            max-width: 500px;
+            margin: 50px auto;
+            padding: 20px;
+            color: #fff;
         }
-
-        .profile-section {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 2rem;
-        }
-
+        
         .profile-card {
-            background-color: var(--darker-bg);
+            background: rgba(22, 33, 62, 0.8);
+            backdrop-filter: blur(5px);
             border-radius: 10px;
-            padding: 2rem;
-            margin-bottom: 3rem;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            padding: 20px;
+            margin-bottom: 20px;
         }
-
-        .profile-header {
-            font-size: 2rem;
-            font-weight: 700;
-            margin-bottom: 1.5rem;
-            color: var(--secondary-color);
-            position: relative;
-            padding-bottom: 10px;
-        }
-
-        .profile-header::after {
-            content: '';
-            position: absolute;
-            left: 0;
-            bottom: 0;
-            width: 60px;
-            height: 3px;
-            background-color: var(--primary-color);
-        }
-
-        .profile-info {
-            margin-bottom: 1.5rem;
-        }
-
+        
         .profile-info p {
-            font-size: 1.1rem;
-            margin-bottom: 0.8rem;
-            display: flex;
+            margin: 15px 0;
         }
-
+        
         .profile-info strong {
-            color: var(--secondary-color);
-            min-width: 150px;
-            display: inline-block;
+            color: #00cec9;
         }
-
+        
         .btn-edit {
-            background-color: var(--primary-color);
+            display: block;
+            width: 100%;
+            padding: 10px;
+            margin-top: 20px;
+            background: #6c5ce7;
             color: white;
-            padding: 0.6rem 1.2rem;
-            border-radius: 30px;
+            border: none;
+            border-radius: 5px;
+            text-align: center;
             text-decoration: none;
-            font-weight: 600;
-            transition: all 0.3s;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
         }
-
-        .btn-edit:hover {
-            background-color: var(--primary-hover);
-            transform: translateY(-3px);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-            color: white;
+        
+        .favorites-title {
+            margin: 30px 0 15px;
+            color: #00cec9;
         }
-
-        .favorites-section {
-            margin-top: 2rem;
-        }
-
+        
         .favorites-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-            gap: 1.5rem;
-            margin-top: 1.5rem;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
         }
-
-        .favorite-item {
-            position: relative;
-            border-radius: 10px;
-            overflow: hidden;
-            transition: all 0.3s;
-            aspect-ratio: 2/3;
-        }
-
-        .favorite-item:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
-        }
-
+        
         .favorite-item img {
             width: 100%;
-            height: 100%;
-            object-fit: cover;
+            border-radius: 5px;
         }
-
-        .favorite-overlay {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            padding: 1rem;
-            background: linear-gradient(to top, rgba(0, 0, 0, 0.9), transparent);
-            color: var(--text-color);
-        }
-
-        .favorite-title {
-            font-weight: 600;
-            margin-bottom: 0.3rem;
-            font-size: 0.9rem;
-        }
-
+        
         .no-favorites {
             text-align: center;
-            padding: 2rem;
-            color: var(--text-secondary);
-            font-size: 1.1rem;
-        }
-
-        @media (max-width: 768px) {
-            .profile-info p {
-                flex-direction: column;
-            }
-            
-            .profile-info strong {
-                margin-bottom: 0.3rem;
-            }
-            
-            .favorites-grid {
-                grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-            }
+            color: #b8c2cc;
+            margin: 20px 0;
         }
     </style>
 </head>
@@ -167,55 +72,39 @@
     {% include 'menu.html' %}
 
     <div class="profile-container">
-        <div class="profile-section">
-            <!-- Seção de informações do usuário -->
-            <div class="profile-card">
-                <h2 class="profile-header">Informações do Perfil</h2>
-                
-                <div class="profile-info">
-                    <p><strong>Nome de Usuário:</strong> {{ username }}</p>
-                    <p><strong>Email:</strong> {{ email }}</p>
-                    <p><strong>Nome Completo:</strong> {{ nome_completo }}</p>
-                </div>
-                
-                <a href="{% url 'editar-perfil' %}" class="btn-edit">
-                    <i class="fas fa-edit"></i> Editar Perfil
-                </a>
+        <div class="profile-card">
+            <h2>Informações do Perfil</h2>
+            
+            <div class="profile-info">
+                <p><strong>Nome de Usuário:</strong> {{ username }}</p>
+                <p><strong>Email:</strong> {{ email }}</p>
+                <p><strong>Nome Completo:</strong> {{ nome_completo }}</p>
             </div>
-
-            <!-- Seção de favoritos -->
-            <div class="favorites-section">
-                <h2 class="profile-header">
-                    <i class="fas fa-heart" style="color: #ff6b6b;"></i> Livros Favoritos
-                </h2>
-                
-                {% if favoritos %}
-                    <div class="favorites-grid">
-                        {% for favorito in favoritos %}
-                            <a href="{% url 'pagina_livro' livro_id=favorito.livro_google_id %}" class="favorite-item">
-                                {% if favorito.capa %}
-                                    <img src="{{ favorito.capa }}" alt="{{ favorito.titulo }}">
-                                {% else %}
-                                    <img src="{% static 'imgs/book-placeholder.png' %}" alt="Capa não disponível">
-                                {% endif %}
-                                <div class="favorite-overlay">
-                                    <h3 class="favorite-title">{{ favorito.titulo|truncatechars:30 }}</h3>
-                                </div>
-                            </a>
-                        {% endfor %}
-                    </div>
-                {% else %}
-                    <p class="no-favorites">
-                        Você ainda não tem livros favoritos. Explore nossa biblioteca e adicione seus favoritos!
-                    </p>
-                {% endif %}
-            </div>
+            
+            <a href="{% url 'editar-perfil' %}" class="btn-edit">
+                Editar Perfil
+            </a>
         </div>
+
+        <h2 class="profile-header">
+            <i class="fas fa-heart" style="color: #ff6b6b;"></i> Livros Favoritos
+        </h2>
+        
+        {% if favoritos %}
+            <div class="favorites-grid">
+                {% for favorito in favoritos %}
+                    <a href="{% url 'pagina_livro' livro_id=favorito.livro_google_id %}">
+                        <img src="{{ favorito.capa|default:'/static/imgs/book-placeholder.png' }}" 
+                             alt="{{ favorito.titulo }}"
+                             class="favorite-item">
+                    </a>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="no-favorites">Nenhum livro favorito ainda</p>
+        {% endif %}
     </div>
 
     {% include 'footer.html' %}
-
-    <!-- Scripts -->
-    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
 </body>
 </html>

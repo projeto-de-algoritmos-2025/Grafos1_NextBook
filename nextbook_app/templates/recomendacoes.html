@@ -7,90 +7,251 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <meta charset="UTF-8"/>
     <title>Recomendações - Nextbook</title>
+    <style>
+        .recomendacoes-container {
+            padding: 20px;
+            background: #1a1a2e;
+            color: white;
+            min-height: calc(100vh - 160px);
+        }
+        
+        .recomendacoes-header {
+            text-align: center;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .recomendacoes-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+            padding: 20px;
+        }
+        
+        .recomendacao-card {
+            background: #16213e;
+            border-radius: 10px;
+            overflow: hidden;
+            transition: all 0.3s;
+            border: 1px solid rgba(108, 92, 231, 0.3);
+            position: relative;
+        }
+        
+        .recomendacao-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+        }
+        
+        .recomendacao-cover {
+            height: 250px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #0f3460;
+            position: relative;
+        }
+        
+        .recomendacao-cover img {
+            max-height: 100%;
+            max-width: 100%;
+            object-fit: contain;
+            padding: 10px;
+            transition: transform 0.3s;
+        }
+        
+        .recomendacao-card:hover .recomendacao-cover img {
+            transform: scale(1.05);
+        }
+        
+        .recomendacao-info {
+            padding: 15px;
+        }
+        
+        .recomendacao-strength {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.7);
+            color: #fdcb6e;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+        }
+        
+        .recomendacao-strength i {
+            margin-right: 5px;
+        }
+        
+        .no-results {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 40px;
+            color: #b8c2cc;
+        }
+        
+        .favorite-heart {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: #fd79a8;
+            background-color: rgba(0, 0, 0, 0.7);
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 2;
+            transition: all 0.3s;
+            border: none;
+            outline: none;
+        }
+        
+        .favorite-heart:hover {
+            transform: scale(1.2);
+            color: #ff0000;
+        }
+        
+        .favorite-heart.favorited {
+            color: red;
+        }
+        
+        @media (max-width: 768px) {
+            .recomendacoes-grid {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            }
+            
+            .recomendacao-cover {
+                height: 200px;
+            }
+        }
+    </style>
 </head>
 <body>
-  {% include 'menu.html' %}
+    {% include 'menu.html' %}
 
-  <div id="recomendacoes" style="background: #000;">
-    <p class="" style="text-align: center; padding: 40px 10px 10px 10px;">Configure abaixo seus gêneros favoritos e a avaliação mínima para os livros.</p>
-    <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#exampleModal">
-      Configurar preferências
-    </button>
-  </div>
-
-  <div class="painel-titulos" style="background: radial-gradient(at 60% 80%, transparent 30%, rgba(0, 0, 0, 0.15) 90%, rgba(0, 0, 0, 0.1) 95%, rgba(0, 0, 0, 0) 100%) 100% 50% / cover, linear-gradient(rgb(0, 0, 0) 0%, transparent 90%);">
-    
-    <!-- Livros -->
-    <h2 class="titulos-titulo" style="color: white;">
-      <br>
-      Livros: 
-    </h2>
-    
-    
-    {% with livros=recomendados|dictsort:"tipo" %}
-      {% if livros %}
-        {% for recomendado in recomendados %}
-          {% if recomendado.tipo == "livro" %}
-            <a href="{% url 'pagina_livro' url_slug=recomendado.slug %}">
-                <div class="container-titulos">
-                    <img class="image" src="https://example.com/capas/{{ recomendado.posterPath }}" alt="{{ recomendado.titulo }} - Capa">
-                    <div class="overlay">
-                        <p>{{ recomendado.titulo }}</p>
-                    </div>
-                </div>  
-            </a>
+    <div class="recomendacoes-container">
+        <div class="recomendacoes-header">
+          <h1>{{ titulo_pagina }}</h1>
+          {% if livro_origem %}
+              <p>Livros relacionados a "{{ livro_origem.titulo }}"</p>
+          {% else %}
+              <p>Baseado em seus livros favoritos e preferências</p>
           {% endif %}
-        {% endfor %}
-      {% else %}
-        <p style="text-align: center; color: #FFF; padding: 40px;">😟 Ops! Não encontramos nenhum livro que corresponda à sua configuração atual. Se ainda não definiu suas preferências, clique no botão acima para configurá-las. Caso já tenha feito isso, tente ajustar suas escolhas e buscar novamente.</p>
-      {% endif %}
-    {% endwith %}
-    
-  </div> 
-
-  <!-- Modal -->
-  <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
-    <div class="modal-dialog" role="document">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="exampleModalLabel">Configurar preferências</h5>
-          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-          </button>
+            <!-- Filtros rápidos -->
+            <div class="filters" style="margin-top: 20px;">
+                <span>Filtrar por:</span>
+                <button class="filter-btn active" data-filter="all">Todos</button>
+                <button class="filter-btn" data-filter="high">Alta relevância</button>
+                <button class="filter-btn" data-filter="same-author">Mesmo autor</button>
+            </div>
         </div>
-        <form method="post" style="color: #fff;">
-          <div class="modal-body">
-              {% csrf_token %}
-              <div class="form-group">
-                  <label for="avaliacao_minima" style="font-weight: bold; font-size: 18px;">Avaliação mínima:</label>
-                  <input class="inputs" type="number" name="avaliacao_minima" id="avaliacao_minima" value="{{ avaliacao_minima }}" required step="0.1">
-              </div>
-
-              <fieldset>
-                  <legend class="topico" style="padding: 10px;">Seus gêneros favoritos:</legend>
-                  <div class="checkbox-container">
-                      {% for genero in generos %}
-                          <div class="checkbox-item">
-                              <input type="checkbox" name="generos" value="{{ genero.id }}" id="genero_{{ genero.id }}"
-                                    {% if genero.id in generos_preferidos %}checked{% endif %}>
-                              <label for="genero_{{ genero.id }}">{{ genero.nome_genero }}</label>
-                          </div>
-                      {% endfor %}
-                  </div>
-              </fieldset>
-          
-          </div>
         
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" style="width: 180px;" data-dismiss="modal">Fechar</button>
-            <button class="btn" style="width: 180px!important;" type="submit">Salvar Preferências</button>
-          </div>
-        </form>
-      </div>
+        <div class="recomendacoes-grid">
+            {% if recomendacoes %}
+                {% for recomendacao in recomendacoes %}
+                <div class="recomendacao-card" 
+                     data-strength="{{ recomendacao.peso }}"
+                     data-author="{{ recomendacao.livro_destino.autores|lower }}">
+                    <!-- Botão de favorito -->
+                    <button class="favorite-heart {% if recomendacao.livro_destino.id in favoritos_ids %}favorited{% endif %}" 
+                            data-livro-id="{{ recomendacao.livro_destino.id }}">
+                        <i class="{% if recomendacao.livro_destino.id in favoritos_ids %}fas{% else %}far{% endif %} fa-heart"></i>
+                    </button>
+                    
+                    <!-- Capa do livro -->
+                    <div class="recomendacao-cover">
+                        <span class="recomendacao-strength">
+                            <i class="fas fa-bolt"></i> {{ recomendacao.peso }}/5
+                        </span>
+                        {% if recomendacao.livro_destino.capa %}
+                            <img src="{{ recomendacao.livro_destino.capa.url }}" alt="{{ recomendacao.livro_destino.titulo }}">
+                        {% else %}
+                            <img src="{% static 'imgs/book-placeholder.png' %}" alt="Sem capa">
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Informações do livro -->
+                    <div class="recomendacao-info">
+                        <h3>{{ recomendacao.livro_destino.titulo }}</h3>
+                        <p>{{ recomendacao.livro_destino.autores|default:"Autor desconhecido" }}</p>
+                        <p class="genre-tags">
+                            {% for genero in recomendacao.livro_destino.lista_generos|slice:":3" %}
+                                <span class="genre-tag">{{ genero }}</span>
+                            {% endfor %}
+                        </p>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="no-results">
+                    <i class="fas fa-book-open" style="font-size: 3rem; margin-bottom: 20px;"></i>
+                    <h3>Nenhuma recomendação disponível no momento</h3>
+                    <p>Complete seu perfil e avalie alguns livros para receber recomendações personalizadas</p>
+                    <a href="{% url 'perfil' %}" class="btn" style="margin-top: 20px;">Completar Perfil</a>
+                </div>
+            {% endif %}
+        </div>
     </div>
-  </div>
-  
-  {% include 'footer.html' %}
-</body>
 
+    {% include 'footer.html' %}
+
+    <script>
+        // Filtros
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelector('.filter-btn.active').classList.remove('active');
+                this.classList.add('active');
+                
+                const filter = this.dataset.filter;
+                const cards = document.querySelectorAll('.recomendacao-card');
+                
+                cards.forEach(card => {
+                    const strength = parseInt(card.dataset.strength);
+                    const author = card.dataset.author;
+                    
+                    if (filter === 'all' || 
+                        (filter === 'high' && strength >= 4) ||
+                        (filter === 'same-author' && author.includes('{{ livro_origem.autores|lower }}'))) {
+                        card.style.display = 'block';
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+            });
+        });
+        
+        // Favoritos
+        document.querySelectorAll('.favorite-heart').forEach(heart => {
+            heart.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const livroId = this.getAttribute('data-livro-id');
+                const isFavorited = this.classList.contains('favorited');
+                
+                fetch(`/favoritar/${livroId}/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}',
+                    },
+                    body: JSON.stringify({ 'favoritado': !isFavorited }),
+                })
+                .then(response => {
+                    if (response.ok) {
+                        this.classList.toggle('favorited');
+                        const icon = this.querySelector('i');
+                        icon.classList.toggle('fas');
+                        icon.classList.toggle('far');
+                    }
+                })
+                .catch(error => console.error('Erro ao favoritar:', error));
+            });
+        });
+    </script>
+</body>
 </html>

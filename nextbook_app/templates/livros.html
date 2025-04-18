@@ -1,393 +1,332 @@
 <!DOCTYPE html>
 {% load static %}
 <html lang="pt-br">
-<head>
-    {% include 'head.html' %}
-    <title>NextBook :: Catálogo de Livros</title>
-    <style>
-        .main-content {
-            margin-top: 80px;
-            padding: 20px;
-            min-height: calc(100vh - 160px);
-            background-color: #1a1a2e;
-            color: white;
-        }
-        
-        .page-header {
-            text-align: center;
-            margin-bottom: 2rem;
-            padding-bottom: 1rem;
-            border-bottom: 1px solid #6c5ce7;
-        }
-        
-        .filters {
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            margin-bottom: 2rem;
-            flex-wrap: wrap;
-            align-items: center;
-        }
-        
-        .filter-btn {
-            padding: 8px 16px;
-            border-radius: 20px;
-            background-color: #6c5ce7;
-            color: white;
-            text-decoration: none;
-            transition: all 0.3s;
-            font-weight: 500;
-            border: none;
-            cursor: pointer;
-        }
-        
-        .filter-btn:hover {
-            background-color: #5649c0;
-            transform: translateY(-2px);
-        }
-        
-        .books-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 2rem;
-            padding: 1rem;
-        }
-        
-        .book-card {
-            background-color: #16213e;
-            border-radius: 10px;
-            overflow: hidden;
-            transition: all 0.3s;
-            border: 1px solid rgba(108, 92, 231, 0.3);
-            color: white;
-            display: block;
-            height: 100%;
-        }
-        
+    <head>
+        {% include 'head.html' %}
+        <title>NextBook :: Catálogo de Livros</title>
+        <style>
+            .main-content {
+                margin-top: 80px;
+                padding: 20px;
+                min-height: calc(100vh - 160px);
+                background-color: #1a1a2e;
+                color: white;
+            }
     
-        .book-cover {
-            height: 250px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background-color: #0f3460;
-            position: relative;
-        }
-        
-        .book-cover img {
-            max-height: 100%;
-            max-width: 100%;
-            object-fit: contain;
-            padding: 10px;
-            transition: transform 0.3s;
-        }
-        
-        .book-card:hover .book-cover img {
-            transform: scale(1.05);
-        }
-        
-        .rating-badge {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background-color: rgba(0, 0, 0, 0.7);
-            color: #fdcb6e;
-            padding: 5px 10px;
-            border-radius: 20px;
-            font-size: 0.9rem;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-        
-        .book-info {
-            padding: 1rem;
-        }
-        
-        .book-info h3 {
-            font-size: 1rem;
-            margin-bottom: 0.5rem;
-            color: #00cec9;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-            min-height: 3em;
-        }
-        
-        .author, .published-year, .language {
-            font-size: 0.85rem;
-            color: #b8c2cc;
-            margin-bottom: 0.3rem;
-        }
-        
-        .no-results {
-            grid-column: 1 / -1;
-            text-align: center;
-            padding: 3rem;
-            color: #b8c2cc;
-        }
-        
-        .no-results i {
-            margin-bottom: 1rem;
-            color: #6c5ce7;
-        }
-        
-        .pagination {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin-top: 3rem;
-            gap: 15px;
-        }
-        
-        .page-link {
-            padding: 8px 16px;
-            border-radius: 5px;
-            background-color: #6c5ce7;
-            color: white;
-            text-decoration: none;
-            transition: all 0.3s;
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-        }
-       
-        
-        .current-page {
-            padding: 8px 16px;
-        }
-        
-        .loading {
-            grid-column: 1 / -1;
-            text-align: center;
-            padding: 2rem;
-        }
-        .favorite-heart {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            color: #fd79a8; /* Cor normal */
-            background-color: rgba(0, 0, 0, 0.7);
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            z-index: 2;
-            transition: all 0.3s;
-        }
-
-        .favorite-heart:hover {
-            transform: scale(1.2);
-            color: #ff0000; /* Cor ao passar o mouse */
-        }
-
-        .favorite-heart.favorited {
-            color: red; /* Cor quando favoritado */
-        }
-
-        .book-cover {
-            position: relative; /* posicionar o coração */
-        }
-        
-        @media (max-width: 768px) {
-            .books-grid {
-                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-                gap: 1rem;
+            .page-header {
+                text-align: center;
+                margin-bottom: 2rem;
+                padding-bottom: 1rem;
+                border-bottom: 1px solid #6c5ce7;
             }
-            
-            .book-cover {
-                height: 200px;
-            }
-            
+    
             .filters {
-                gap: 10px;
+                display: flex;
+                justify-content: center;
+                gap: 15px;
+                margin-bottom: 2rem;
+                flex-wrap: wrap;
+                align-items: center;
             }
-            
+    
             .filter-btn {
-                padding: 6px 12px;
-                font-size: 0.9rem;
+                padding: 8px 16px;
+                border-radius: 20px;
+                background-color: #6c5ce7;
+                color: white;
+                text-decoration: none;
+                transition: all 0.3s;
+                font-weight: 500;
+                border: none;
+                cursor: pointer;
             }
-            .filter-btn.active {
-                background-color: #00cec9 !important;
+    
+            .filter-btn:hover {
+                background-color: #5649c0;
                 transform: translateY(-2px);
             }
-
-            .filter-btn i {
-                margin-right: 5px;
-            }
-        }
-    </style>
-</head>
-<body>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const urlLivros = "{% url 'livros' %}";
-            const params = new URLSearchParams(window.location.search);
-            const order = params.get('order');
-            
-            if (order) {
-                document.querySelectorAll('.filter-btn').forEach(btn => {
-                    if (btn.getAttribute('href')?.includes(order)) {
-                        btn.classList.add('active');
-                        btn.style.backgroundColor = '#00cec9';
-                    }
-                });
+    
+            .books-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+                gap: 2rem;
+                padding: 1rem;
             }
     
-            // Não será mais necessário modificar o comportamento do link, já que removemos o link dos livros
-            document.querySelector(`a[href="${urlLivros}"]`).addEventListener('click', function(e) {
-                e.preventDefault();
-                window.location.href = `${urlLivros}?random=${new Date().getTime()}`;
-            });
+            .book-card {
+                background-color: #16213e;
+                border-radius: 10px;
+                overflow: hidden;
+                transition: all 0.3s;
+                border: 1px solid rgba(108, 92, 231, 0.3);
+                color: white;
+                display: block;
+                height: 100%;
+            }
     
-            // Modificação do comportamento do coração de favorito
-            document.querySelectorAll('.favorite-heart').forEach(heart => {
-                heart.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
+            .book-cover {
+                height: 250px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background-color: #0f3460;
+                position: relative;
+            }
+    
+            .book-cover img {
+                max-height: 100%;
+                max-width: 100%;
+                object-fit: contain;
+                padding: 10px;
+                transition: transform 0.3s;
+            }
+    
+            .book-card:hover .book-cover img {
+                transform: scale(1.05);
+            }
+    
+            .rating-badge {
+                position: absolute;
+                top: 10px;
+                right: 10px;
+                background-color: rgba(0, 0, 0, 0.7);
+                color: #fdcb6e;
+                padding: 5px 10px;
+                border-radius: 20px;
+                font-size: 0.9rem;
+                display: flex;
+                align-items: center;
+                gap: 5px;
+            }
+    
+            .book-info {
+                padding: 10px;
+                display: flex;
+                flex-direction: column;
+                gap: 4px;
+                font-size: 14px;
+                line-height: 1.3;
+            }
+    
+            .book-info h3 {
+                font-size: 16px;
+                margin-bottom: 4px;
+            }
+    
+            .book-info p {
+                margin: 0;
+            }
+    
+            .author,
+            .published-year,
+            .language {
+                font-size: 0.85rem;
+                color: #b8c2cc;
+                margin-bottom: 0.3rem;
+            }
+    
+            .no-results {
+                grid-column: 1 / -1;
+                text-align: center;
+                padding: 3rem;
+                color: #b8c2cc;
+            }
+    
+            .no-results i {
+                margin-bottom: 1rem;
+                color: #6c5ce7;
+            }
+    
+            .pagination {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                margin-top: 3rem;
+                gap: 15px;
+            }
+    
+            .page-link {
+                padding: 8px 16px;
+                border-radius: 5px;
+                background-color: #6c5ce7;
+                color: white;
+                text-decoration: none;
+                transition: all 0.3s;
+                display: inline-flex;
+                align-items: center;
+                gap: 5px;
+            }
+    
+            .current-page {
+                padding: 8px 16px;
+            }
+    
+            .loading {
+                grid-column: 1 / -1;
+                text-align: center;
+                padding: 2rem;
+            }
+    
+            .favorite-heart {
+                position: absolute;
+                top: 10px;
+                left: 10px;
+                color: #fd79a8;
+                background-color: rgba(0, 0, 0, 0.7);
+                width: 32px;
+                height: 32px;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+                z-index: 2;
+                transition: all 0.3s;
+            }
+    
+            .favorite-heart:hover {
+                transform: scale(1.2);
+                color: #ff0000;
+            }
+    
+            .favorite-heart.favorited {
+                color: red;
+            }
+    
+            @media (max-width: 768px) {
+                .books-grid {
+                    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+                    gap: 1rem;
+                }
+    
+                .book-cover {
+                    height: 200px;
+                }
+    
+                .filters {
+                    gap: 10px;
+                }
+    
+                .filter-btn {
+                    padding: 6px 12px;
+                    font-size: 0.9rem;
+                }
+    
+                .filter-btn.active {
+                    background-color: #00cec9 !important;
+                    transform: translateY(-2px);
+                }
+    
+                .filter-btn i {
+                    margin-right: 5px;
+                }
+            }
+        </style>
+    </head>
+  
+    <body>
+        <script src="{% static 'js/favoritos.js' %}"></script>
+        var csrfToken = '{{ csrf_token }}';
+        
+        {% include 'menu.html' %}
+      
+        <main class="main-content">
+            <div class="container">
+                <div class="page-header">
+                    <h1>Catálogo de Livros</h1>
+                    <p>Descubra seu próximo livro favorito</p>
+                </div>
+    
+                <div class="filters">
+                    <span>Filtrar por:</span>
+                    <a href="?order=title" class="filter-btn">Título</a>
+                    <a href="?order=-published" class="filter-btn">Mais Recentes</a>
+                    <a href="?random=true" class="filter-btn">Aleatórios</a>
+                </div>
+                
+                <div class="books-grid">
+                    {% if livros %}
+                        {% for livro in livros %}
+                        <div class="book-card">
+                            <div class="book-cover">
+                                <div class="favorite-heart {% if livro.id in favoritos_ids %}favorited{% endif %}" data-livro-id="{{ livro.id }}">
+                                    <i class="{% if livro.id in favoritos_ids %}fas{% else %}far{% endif %} fa-heart"></i>
+                                </div>
+                        
+                                {% if livro.volumeInfo.imageLinks %}
+                                    <img src="{{ livro.volumeInfo.imageLinks.thumbnail }}" alt="{{ livro.volumeInfo.title }}">
+                                {% else %}
+                                    <img src="{% static 'imgs/book-placeholder.png' %}" alt="Capa não disponível">
+                                {% endif %}
+                            </div>
+                        
+                            <div class="book-info">
+                                <h3>{{ livro.volumeInfo.title|default:"Título desconhecido" }}</h3>
+                                <p class="author">
+                                    {% if livro.volumeInfo.authors %}
+                                        por {{ livro.volumeInfo.authors|join:", " }}
+                                    {% else %}
+                                        Autor desconhecido
+                                    {% endif %}
+                                </p>
+                                <p class="genre">
+                                    {% if livro.volumeInfo.categories %}
+                                        Gênero: {{ livro.volumeInfo.categories|join:", " }}
+                                    {% else %}
+                                        Gênero desconhecido
+                                    {% endif %}
+                                </p>
+                                <p class="published-year">
+                                    {% if livro.volumeInfo.publishedDate %}
+                                        {{ livro.volumeInfo.publishedDate|slice:":4" }}
+                                    {% else %}
+                                        Data desconhecida
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="no-results">
+                            <i class="fas fa-book-reader"></i>
+                            <h2>Nenhum livro encontrado</h2>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </main>
+    
+        {% include 'footer.html' %}
+
+        <script>
+            // Lógica para alternar o estado do coração de favorito
+            const hearts = document.querySelectorAll('.favorite-heart');
+            hearts.forEach(heart => {
+                heart.addEventListener('click', function() {
+                    const livroId = heart.getAttribute('data-livro-id');
+                    const isFavorited = heart.classList.contains('favorited');
                     
-                    const livroId = this.getAttribute('data-livro-id');
-                    const isFavorited = this.classList.contains('favorited');
-                    
-                    fetch(`/favoritar_livro/${livroId}/`, {
+                    // Enviar a requisição para favoritar/desfavoritar
+                    fetch(`/favoritar/${livroId}/`, {
                         method: 'POST',
                         headers: {
+                            'Content-Type': 'application/json',
                             'X-CSRFToken': '{{ csrf_token }}',
-                            'Content-Type': 'application/json'
                         },
-                        body: JSON.stringify({
-                            favoritar: !isFavorited ? 'true' : 'false'  // Enviando como string 'true' ou 'false'
-                        })
+                        body: JSON.stringify({ 'favoritado': !isFavorited }),
                     })
-                    .then(response => response.json())
-                    .then(data => {
-                        console.log("Resposta do servidor:", data);
-                        if (data.success) {
-                            this.classList.toggle('favorited');
-                            const icon = this.querySelector('i');
-                            if (this.classList.contains('favorited')) {
-                                icon.classList.add('fas');  // Ícone cheio
-                                icon.classList.remove('far'); // Ícone vazio
-                            } else {
-                                icon.classList.add('far');  // Ícone vazio
-                                icon.classList.remove('fas'); // Ícone cheio
-                            }
+                    .then(response => {
+                        if (response.ok) {
+                            // Alterna a classe favorited
+                            heart.classList.toggle('favorited');
+                            const icon = heart.querySelector('i');
+                            icon.classList.toggle('fas');
+                            icon.classList.toggle('far');
                         }
                     })
-                    .catch(error => {
-                        console.error('Error:', error);
-                    });
-
+                    .catch(error => console.error('Erro ao favoritar:', error));
                 });
             });
-        });
-    </script>
-    
-
-    {% include 'menu.html' %}
-
-    <main class="main-content">
-        <div class="container">
-            <div class="page-header">
-                <h1>Catálogo de Livros</h1>
-                <p>Descubra seu próximo livro favorito</p>
-            </div>
-
-            <div class="filters">
-                <span>Filtrar por:</span>
-                <a href="?order=title" class="filter-btn">Título</a>
-                <a href="?order=-published_date" class="filter-btn">Mais Recentes</a>
-                <a href="{% url 'livros' %}" class="filter-btn">Aleatórios</a>
-            </div>
-
-            <div class="books-grid">
-                {% for livro in livros %}
-                <div class="book-card">
-                        <div class="book-cover">
-                            <div class="favorite-heart {% if livro.id in favoritos_ids %}favorited{% endif %}" data-livro-id="{{ livro.id }}">
-                                <i class="{% if livro.id in favoritos_ids %}fas{% else %}far{% endif %} fa-heart"></i>
-                            </div>
-                            
-                            
-                            {% if livro.volumeInfo.imageLinks and livro.volumeInfo.imageLinks.thumbnail %}
-                            <img src="{{ livro.volumeInfo.imageLinks.thumbnail }}" alt="{{ livro.volumeInfo.title }}">
-                            {% else %}
-                                <img src="{% static 'imgs/book-placeholder.png' %}" 
-                                     alt="Capa não disponível">
-                            {% endif %}
-
-                            {% if livro.volumeInfo.averageRating %}
-                            <div class="rating-badge">
-                                {{ livro.volumeInfo.averageRating|floatformat:1 }} <i class="fas fa-star"></i>
-                            </div>
-                            {% endif %}
-                        </div>
-                        <div class="book-info">
-                            <h3>{{ livro.volumeInfo.title|default:"Título desconhecido" }}</h3>
-                            <p class="author">
-                                {% if livro.volumeInfo.authors %}
-                                    por {{ livro.volumeInfo.authors|join:", "|truncatechars:30 }}
-                                {% else %}
-                                    Autor desconhecido
-                                {% endif %}
-                            </p>
-                            <p class="language">
-                                {% if livro.volumeInfo.language %}
-                                    {% if livro.volumeInfo.language == 'pt' %}
-                                        Português
-                                    {% else %}
-                                        {{ livro.volumeInfo.language|upper }}
-                                    {% endif %}
-                                {% endif %}
-                            </p>
-                            <p class="published-year">
-                                {% if livro.volumeInfo.publishedDate %}
-                                    {{ livro.volumeInfo.publishedDate|slice:":4" }}
-                                {% else %}
-                                    Ano desconhecido
-                                {% endif %}
-                            </p>
-                        </div>
-                    </a>
-                    
-                    
-                    
-                </div>
-                {% empty %}
-                <div class="no-results">
-                    <i class="fas fa-book-open fa-3x"></i>
-                    <p>Nenhum livro encontrado</p>
-                    <p>Tente recarregar a página ou alterar os filtros</p>
-                </div>
-                {% endfor %}
-            </div>
-
-            {% if is_paginated %}
-            <div class="pagination">
-                {% if page_obj.has_previous %}
-                <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.order %}&order={{ request.GET.order }}{% endif %}" class="page-link">
-                    <i class="fas fa-chevron-left"></i> Anterior
-                </a>
-                {% endif %}
-
-                <span class="current-page">
-                    Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
-                </span>
-
-                {% if page_obj.has_next %}
-                <a href="?page={{ page_obj.next_page_number }}{% if request.GET.order %}&order={{ request.GET.order }}{% endif %}" class="page-link">
-                    Próximo <i class="fas fa-chevron-right"></i>
-                </a>
-                {% endif %}
-            </div>
-            {% endif %}
-        </div>
-    </main>
-    {% include 'footer.html' %}
-</body>
+        </script>
+    </body>
 </html>

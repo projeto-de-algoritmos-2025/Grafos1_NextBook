@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container">
+    <!-- Livro principal -->
+    <div class="book-main">
+        <div class="book-cover">
+            {% if livro.capa %}
+                <img src="{{ livro.capa.url }}" alt="{{ livro.titulo }}">
+            {% else %}
+                <img src="{% static 'imgs/book-placeholder.png' %}" alt="Sem capa">
+            {% endif %}
+        </div>
+        <div class="book-info">
+            <h1>{{ livro.titulo }}</h1>
+            <p class="author">{{ livro.autores }}</p>
+            <p class="genres">
+                {% for genero in livro.lista_generos %}
+                    <span class="genre-tag">{{ genero }}</span>
+                {% endfor %}
+            </p>
+        </div>
+    </div>
+
+    <!-- Seção de recomendações -->
+    <div class="recommendations-section">
+        <h2>Quem gostou deste livro também gostou de:</h2>
+        
+        <div class="recommendations-grid">
+            {% for recomendacao in recomendacoes %}
+            <div class="recommendation-card">
+                <div class="recommendation-strength">
+                    Similaridade: {{ recomendacao.peso }}/5
+                </div>
+                <div class="recommendation-cover">
+                    {% if recomendacao.livro_destino.capa %}
+                        <img src="{{ recomendacao.livro_destino.capa.url }}" 
+                             alt="{{ recomendacao.livro_destino.titulo }}">
+                    {% else %}
+                        <img src="{% static 'imgs/book-placeholder.png' %}" 
+                             alt="Sem capa">
+                    {% endif %}
+                </div>
+                <div class="recommendation-info">
+                    <h3>{{ recomendacao.livro_destino.titulo }}</h3>
+                    <p>{{ recomendacao.livro_destino.autores }}</p>
+                </div>
+            </div>
+            {% empty %}
+            <p class="no-recommendations">Ainda não temos recomendações para este livro.</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

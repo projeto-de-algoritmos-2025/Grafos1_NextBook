@@ -86,23 +86,8 @@
             </a>
         </div>
 
-        <h2 class="profile-header">
-            <i class="fas fa-heart" style="color: #ff6b6b;"></i> Livros Favoritos
-        </h2>
+       
         
-        {% if favoritos %}
-            <div class="favorites-grid">
-                {% for favorito in favoritos %}
-                    <a href="{% url 'pagina_livro' livro_id=favorito.livro_google_id %}">
-                        <img src="{{ favorito.capa|default:'/static/imgs/book-placeholder.png' }}" 
-                             alt="{{ favorito.titulo }}"
-                             class="favorite-item">
-                    </a>
-                {% endfor %}
-            </div>
-        {% else %}
-            <p class="no-favorites">Nenhum livro favorito ainda</p>
-        {% endif %}
     </div>
 
     {% include 'footer.html' %}

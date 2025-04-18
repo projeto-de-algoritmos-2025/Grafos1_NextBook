@@ -11,6 +11,10 @@ GENRES = [
     "drama", "biografia", "poesia", "humor", "distopia", "tecnologia"
 ]
 
+def normalizar_genero(nome_genero):
+    """Normaliza o nome do gênero para consistência"""
+    return nome_genero.strip().lower().capitalize()
+
 def importar_livros():
     for genero_busca in GENRES:
         print(f"🔍 Buscando livros de gênero: {genero_busca}")
@@ -21,70 +25,81 @@ def importar_livros():
             'printType': 'books',
         }
 
-        response = requests.get(GOOGLE_BOOKS_API, params=params)
-        if response.status_code != 200:
-            print(f"❌ Erro ao buscar livros de {genero_busca}: {response.status_code}")
+        try:
+            response = requests.get(GOOGLE_BOOKS_API, params=params, timeout=10)
+            response.raise_for_status()
+        except requests.exceptions.RequestException as e:
+            print(f"❌ Erro ao buscar livros de {genero_busca}: {str(e)}")
             continue
 
         livros = response.json().get('items', [])
         print(f"📘 {len(livros)} livros encontrados para {genero_busca}.")
 
         for item in livros:
-            volume_info = item.get('volumeInfo', {})
-
-            titulo = volume_info.get('title', 'Sem título')
-            slug = slugify(titulo)
-            sinopse = volume_info.get('description', 'Sem sinopse.')
-            capa = volume_info.get('imageLinks', {}).get('thumbnail', '')
-            avaliacao = volume_info.get('averageRating', 0)
-            autor = volume_info.get('authors', ['Desconhecido'])[0]
-            editora = volume_info.get('publisher', 'Desconhecida')
-            num_paginas = volume_info.get('pageCount', 0)
-
-            data_raw = volume_info.get('publishedDate', '2000-01-01')
             try:
-                if len(data_raw) == 4:
-                    dt_publicacao = datetime.strptime(data_raw, "%Y").date()
-                elif len(data_raw) == 7:
-                    dt_publicacao = datetime.strptime(data_raw, "%Y-%m").date()
-                else:
-                    dt_publicacao = datetime.strptime(data_raw, "%Y-%m-%d").date()
-            except Exception:
-                dt_publicacao = datetime.strptime("2000-01-01", "%Y-%m-%d").date()
+                volume_info = item.get('volumeInfo', {})
+                titulo = volume_info.get('title', 'Sem título')
+                if not titulo or titulo == 'Sem título':
+                    continue
 
-            livro_titulo, _ = LivroTitulo.objects.update_or_create(
-                slug=slug,
-                defaults={
-                    'titulo': titulo,
-                    'dt_publicacao': dt_publicacao,
-                    'sinopse': sinopse,
-                    'capaPath': capa,
-                    'avaliacao': avaliacao,
-                }
-            )
+                slug = slugify(titulo)
+                sinopse = volume_info.get('description', 'Sem sinopse.')
+                capa = volume_info.get('imageLinks', {}).get('thumbnail', '')
+                avaliacao = volume_info.get('averageRating', 0)
+                autores = volume_info.get('authors', ['Desconhecido'])
+                autor = autores[0] if autores else 'Desconhecido'
+                editora = volume_info.get('publisher', 'Desconhecida')
+                num_paginas = volume_info.get('pageCount', 0)
 
-            livro_obj, _ = Livro.objects.update_or_create(
-                titulo=livro_titulo,
-                defaults={
-                    'autor': autor,
-                    'editora': editora,
-                    'num_paginas': num_paginas,
-                }
-            )
-            categorias = volume_info.get('categories')
-            if not categorias:
-                categorias = [genero_busca.title()]
-           # Normaliza os nomes dos gêneros
-            for categoria in categorias:
-                nome_genero = categoria.strip().lower().capitalize()
-                genero, _ = GeneroLivro.objects.get_or_create(nome_genero=nome_genero)
-                PossuiGeneroLivro.objects.get_or_create(titulo=livro_titulo, genero=genero)
+                data_raw = volume_info.get('publishedDate', '2000-01-01')
+                try:
+                    if len(data_raw) == 4:
+                        dt_publicacao = datetime.strptime(data_raw, "%Y").date()
+                    elif len(data_raw) == 7:
+                        dt_publicacao = datetime.strptime(data_raw, "%Y-%m").date()
+                    else:
+                        dt_publicacao = datetime.strptime(data_raw, "%Y-%m-%d").date()
+                except ValueError:
+                    dt_publicacao = datetime.strptime("2000-01-01", "%Y-%m-%d").date()
 
-            # Pega os gêneros da API e se não encontrarnada usa o genero_busca da lista GENRES
-            # Depois cria um gênero na tabela caso ainda não exista e cria uma associação ente livros desse gênero em PossuiGeneroLivro
-            for categoria in volume_info.get('categories', [genero_busca.title()]):
-                genero, _ = GeneroLivro.objects.get_or_create(nome_genero=categoria)
-                PossuiGeneroLivro.objects.get_or_create(titulo=livro_titulo, genero=genero)
+                # Criar ou atualizar LivroTitulo
+                livro_titulo, _ = LivroTitulo.objects.update_or_create(
+                    slug=slug,
+                    defaults={
+                        'titulo': titulo,
+                        'dt_publicacao': dt_publicacao,
+                        'sinopse': sinopse,
+                        'capaPath': capa,
+                        'avaliacao': avaliacao,
+                    }
+                )
 
-            print(f"✅ Importado: {titulo}")
+                # Criar ou atualizar Livro
+                livro_obj, _ = Livro.objects.update_or_create(
+                    titulo=livro_titulo,
+                    defaults={
+                        'autor': autor,
+                        'editora': editora,
+                        'num_paginas': num_paginas,
+                    }
+                )
 
+                # Processar gêneros
+                categorias = volume_info.get('categories', [genero_busca])
+                generos_processados = set()
+                
+                for categoria in categorias:
+                    if not categoria:
+                        continue
+                    # Dividir categorias que podem vir como "Ficção/Romance"
+                    for sub_categoria in categoria.split('/'):
+                        nome_genero = normalizar_genero(sub_categoria)
+                        if nome_genero in GENRES and nome_genero not in generos_processados:
+                            generos_processados.add(nome_genero)
+                            genero, _ = GeneroLivro.objects.get_or_create(nome_genero=nome_genero)
+                            PossuiGeneroLivro.objects.get_or_create(titulo=livro_titulo, genero=genero)
+
+                print(f"✅ Importado: {titulo}")
+            except Exception as e:
+                print(f"⚠️ Erro ao processar livro: {str(e)}")
+                continue

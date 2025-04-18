@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deletar Conta</title>
+</head>
+<body>
+    <h1>Deletar Conta</h1>
+    <p>Tem certeza de que deseja deletar sua conta? Esta ação não pode ser desfeita.</p>
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit">Confirmar</button>
+        <a href="{% url 'perfil' %}">Cancelar</a>
+    </form>
+</body>
+</html>

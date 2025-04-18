@@ -34,11 +34,11 @@ class Perfil(models.Model):
 
 class Favorito(models.Model):
     usuario = models.ForeignKey(User, on_delete=models.CASCADE)
-    livro = models.ForeignKey("Livro", on_delete=models.CASCADE)
+    livro_id = models.CharField(max_length=100)
     data_criacao = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        unique_together = ('usuario', 'livro')
+        unique_together = ('usuario', 'livro_id')
         verbose_name_plural = 'Favoritos'
 
 class Livro(models.Model):

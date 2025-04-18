@@ -186,7 +186,7 @@
         }
 
         .favorite-heart.favorited {
-            color: #ff0000; /* Cor quando favoritado */
+            color: red; /* Cor quando favoritado */
         }
 
         .book-cover {
@@ -238,11 +238,14 @@
                     }
                 });
             }
-            
+    
+            // Não será mais necessário modificar o comportamento do link, já que removemos o link dos livros
             document.querySelector(`a[href="${urlLivros}"]`).addEventListener('click', function(e) {
                 e.preventDefault();
                 window.location.href = `${urlLivros}?random=${new Date().getTime()}`;
             });
+    
+            // Modificação do comportamento do coração de favorito
             document.querySelectorAll('.favorite-heart').forEach(heart => {
                 heart.addEventListener('click', function(e) {
                     e.preventDefault();
@@ -258,22 +261,33 @@
                             'Content-Type': 'application/json'
                         },
                         body: JSON.stringify({
-                            favoritar: !isFavorited
+                            favoritar: !isFavorited ? 'true' : 'false'  // Enviando como string 'true' ou 'false'
                         })
                     })
                     .then(response => response.json())
                     .then(data => {
+                        console.log("Resposta do servidor:", data);
                         if (data.success) {
                             this.classList.toggle('favorited');
+                            const icon = this.querySelector('i');
+                            if (this.classList.contains('favorited')) {
+                                icon.classList.add('fas');  // Ícone cheio
+                                icon.classList.remove('far'); // Ícone vazio
+                            } else {
+                                icon.classList.add('far');  // Ícone vazio
+                                icon.classList.remove('fas'); // Ícone cheio
+                            }
                         }
                     })
                     .catch(error => {
                         console.error('Error:', error);
                     });
+
                 });
             });
         });
     </script>
+    
 
     {% include 'menu.html' %}
 
@@ -289,19 +303,16 @@
                 <a href="?order=title" class="filter-btn">Título</a>
                 <a href="?order=-published_date" class="filter-btn">Mais Recentes</a>
                 <a href="{% url 'livros' %}" class="filter-btn">Aleatórios</a>
-            
-
             </div>
 
             <div class="books-grid">
                 {% for livro in livros %}
-                
                 <div class="book-card">
-                    <a href="{% url 'pagina_livro' livro_id=livro.id %}">
                         <div class="book-cover">
-                            <div class="favorite-heart" data-livro-id="{{ livro.id }}">
-                                <i class="fas fa-heart"></i>
+                            <div class="favorite-heart {% if livro.id in favoritos_ids %}favorited{% endif %}" data-livro-id="{{ livro.id }}">
+                                <i class="{% if livro.id in favoritos_ids %}fas{% else %}far{% endif %} fa-heart"></i>
                             </div>
+                            
                             
                             {% if livro.volumeInfo.imageLinks and livro.volumeInfo.imageLinks.thumbnail %}
                             <img src="{{ livro.volumeInfo.imageLinks.thumbnail }}" alt="{{ livro.volumeInfo.title }}">
@@ -377,10 +388,6 @@
             {% endif %}
         </div>
     </main>
-
     {% include 'footer.html' %}
 </body>
 </html>
-
-
-

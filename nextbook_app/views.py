@@ -11,9 +11,9 @@ from django.core.exceptions import ImproperlyConfigured
 from django.core.paginator import Paginator
 import random
 from django.views.decorators.http import require_POST
-from .models import Livro, Perfil 
+from .models import Livro, Perfil, Favorito
 from django.views.decorators.csrf import csrf_exempt
-
+import json
 
 
 def home(request):
@@ -218,14 +218,13 @@ def recomendacoes(request):
 @login_required
 def favoritar_livro(request, livro_id):
     try:
+        data = json.loads(request.body)
         if request.POST.get('favoritar') == 'true':
-            # Adicionar aos favoritos
             Favorito.objects.get_or_create(
                 usuario=request.user,
                 livro_id=livro_id
             )
         else:
-            # Remover dos favoritos
             Favorito.objects.filter(
                 usuario=request.user,
                 livro_id=livro_id

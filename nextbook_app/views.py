@@ -239,8 +239,28 @@ def configurar_preferencias(request):
     if request.method == 'POST':
         livros_ids = request.POST.getlist('livros')
         for livro_id in livros_ids:
-            Favorito.objects.get_or_create(usuario=request.user, livro_id=livro_id)
-        return redirect('recomendacoes')
+            # Busca os dados do livro na API do Google Books
+            api_url = f"https://www.googleapis.com/books/v1/volumes/{livro_id}"
+            try:
+                response = requests.get(api_url)
+                response.raise_for_status()
+                livro_api = response.json()
+                titulo = livro_api.get('volumeInfo', {}).get('title', 'Título não encontrado')
+                autor = ', '.join(livro_api.get('volumeInfo', {}).get('authors', ['Autor desconhecido']))
+                capa_url = livro_api.get('volumeInfo', {}).get('imageLinks', {}).get('thumbnail', '')
+
+                # Cria ou busca o favorito no banco de dados
+                Favorito.objects.get_or_create(
+                    usuario=request.user,
+                    livro_id=livro_id,
+                    defaults={'data_criacao': None}  # Define valores padrão, se necessário
+                )
+            except Exception as e:
+                print(f"Erro ao buscar ou criar favorito: {e}")
+        return redirect('perfil')  # Redireciona para o perfil após salvar
+
+    # Busca livros já favoritados pelo usuário
+    favoritos = Favorito.objects.filter(usuario=request.user).values_list('livro_id', flat=True)
 
     # Busca livros da API do Google Books
     try:
@@ -256,12 +276,11 @@ def configurar_preferencias(request):
         print(f"Erro ao buscar livros da API: {e}")
         livros_api = []
 
-    # Identifica os livros já favoritados pelo usuário
-    favoritos = Favorito.objects.filter(usuario=request.user).values_list('livro_id', flat=True)
+    # Exclui os livros já favoritados
+    livros_disponiveis = [livro for livro in livros_api if livro['id'] not in favoritos]
 
     return render(request, 'configurar_preferencias.html', {
-        'livros': livros_api,
-        'favoritos': favoritos,
+        'livros': livros_disponiveis,
     })
 
 def livros_debug(request):

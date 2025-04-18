@@ -1,4 +1,5 @@
 from django.urls import path
+from django.views.decorators.csrf import csrf_exempt
 from . import views
 
 urlpatterns = [
@@ -7,7 +8,7 @@ urlpatterns = [
     path('login/', views.realizar_login, name='login'),
     path('livros/', views.livros, name='livros'),
     path('livros-debug/', views.livros_debug, name='livros_debug'),
-    path('favoritar/<str:livro_id>/', views.favoritar_livro, name='favoritar_livro'),
+    path('favoritar/<str:livro_id>/', csrf_exempt(views.favoritar_livro), name='favoritar_livro'),
     path('perfil/', views.perfil, name='perfil'),
     path('editar-perfil/', views.editar_perfil, name='editar-perfil'),
     path('logout/', views.realizar_logout, name='realizar_logout'),

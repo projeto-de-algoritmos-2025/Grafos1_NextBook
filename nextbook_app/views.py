@@ -13,6 +13,8 @@ from django.conf import settings
 import random
 from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import render, get_object_or_404
+from django.db import transaction
+from datetime import datetime
 
 
 # Função para renderizar a home page
@@ -112,12 +114,11 @@ def livros(request):
 
     livros_data = []
 
-    # Lista de temas aleatórios (pode adicionar mais)
     temas = ['fiction', 'romance', 'science', 'history', 'technology', 'fantasy', 'biography']
 
     if random_filter:
         tema = random.choice(temas)
-        start_index = random.randint(0, 100)  # Pega a partir de um ponto aleatório
+        start_index = random.randint(0, 100)
 
         try:
             response = requests.get(
@@ -144,6 +145,32 @@ def livros(request):
             except requests.exceptions.RequestException as e:
                 print(f"Erro na API: {e}")
 
+    # Salvar livros no banco de dados
+    for livro in livros_data:
+        volume_info = livro.get('volumeInfo', {})
+        publicado_em = volume_info.get('publishedDate', None)
+
+        # Tratar diferentes formatos de data
+        if publicado_em:
+            try:
+                if len(publicado_em) == 4:  # Apenas o ano
+                    publicado_em = datetime.strptime(publicado_em, '%Y').date()
+                elif len(publicado_em) == 7:  # Ano e mês
+                    publicado_em = datetime.strptime(publicado_em, '%Y-%m').date()
+                else:  # Ano, mês e dia
+                    publicado_em = datetime.strptime(publicado_em, '%Y-%m-%d').date()
+            except ValueError:
+                publicado_em = None  # Ignorar datas inválidas
+
+        Livro.objects.get_or_create(
+            id=livro['id'],
+            defaults={
+                'titulo': volume_info.get('title', 'Título Desconhecido'),
+                'descricao': volume_info.get('description', 'Descrição não disponível'),
+                'publicado_em': publicado_em,
+            }
+        )
+
     # Ordenações
     if order == 'title':
         livros_data.sort(key=lambda x: x['volumeInfo'].get('title', '').lower())
@@ -155,50 +182,43 @@ def livros(request):
     })
 
 @login_required
+@csrf_exempt
+@require_POST
 def favoritar_livro(request, livro_id):
     livro = get_object_or_404(Livro, id=livro_id)
     usuario = request.user
-    
-    if request.method == 'POST':
-        try:
-            # Verifica se já está favoritado
-            favoritado = Favorito.objects.filter(usuario=usuario, livro=livro).exists()
-            
-            if request.POST.get('favoritado') == 'true' and not favoritado:
-                # Adiciona aos favoritos e atualiza o grafo
-                Favorito.objects.create(usuario=usuario, livro=livro)
+
+    try:
+        favoritado = request.POST.get('favoritado') == 'true'
+
+        with transaction.atomic():
+            if favoritado:
+                Favorito.objects.get_or_create(usuario=usuario, livro=livro)
                 atualizar_grafo(usuario, livro)
-                return JsonResponse({'success': True, 'action': 'added'})
-            elif request.POST.get('favoritado') == 'false' and favoritado:
-                # Remove dos favoritos
+            else:
                 Favorito.objects.filter(usuario=usuario, livro=livro).delete()
-                return JsonResponse({'success': True, 'action': 'removed'})
-            
-            return JsonResponse({'success': True, 'action': 'no_change'})
-        except Exception as e:
-            return JsonResponse({'success': False, 'error': str(e)}, status=400)
-    
-    return JsonResponse({'success': False, 'error': 'Método não permitido'}, status=405)
+
+        return JsonResponse({'success': True, 'favoritado': favoritado})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=400)
 
 def atualizar_grafo(usuario, livro_novo):
-    # Pega os últimos 5 favoritos do usuário (excluindo o atual)
     ultimos_favoritos = Favorito.objects.filter(
         usuario=usuario
     ).exclude(livro=livro_novo).order_by('-data_favorito')[:5]
     
     for favorito in ultimos_favoritos:
-        # Cria/atualiza conexões no grafo (bidirecional)
         GrafoLivros.objects.update_or_create(
             livro_origem=favorito.livro,
             livro_destino=livro_novo,
-            defaults={'peso': models.F('peso') + 1}  # Incrementa o peso
+            defaults={'peso': models.F('peso') + 1}
         )
-        
         GrafoLivros.objects.update_or_create(
             livro_origem=livro_novo,
             livro_destino=favorito.livro,
             defaults={'peso': models.F('peso') + 1}
         )
+
 # Função para recomendação de livros baseada nos gêneros favoritos do usuário
 def recomendacoes(request, livro_id):
     # Pega as 5 recomendações mais fortes para o livro

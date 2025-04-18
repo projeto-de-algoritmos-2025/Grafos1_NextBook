@@ -7,6 +7,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <meta charset="UTF-8"/>
     <title>Recomendações - Nextbook</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <style>
         .recomendacoes-container {
             padding: 20px;
@@ -119,6 +120,53 @@
             color: red;
         }
         
+        .genre-tag {
+            display: inline-block;
+            background: #6c5ce7;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 0.7rem;
+            margin-right: 5px;
+            margin-top: 5px;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 8px 16px;
+            background: #6c5ce7;
+            color: white;
+            border-radius: 4px;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+        
+        .btn:hover {
+            background: #5649c0;
+            transform: translateY(-2px);
+        }
+        
+        .filter-btn {
+            padding: 8px 16px;
+            border-radius: 20px;
+            background-color: #6c5ce7;
+            color: white;
+            text-decoration: none;
+            transition: all 0.3s;
+            font-weight: 500;
+            border: none;
+            cursor: pointer;
+        }
+        
+        .filter-btn.active {
+            background-color: #00cec9;
+        }
+        
+        .filter-btn:hover {
+            background-color: #5649c0;
+            transform: translateY(-2px);
+        }
+        
         @media (max-width: 768px) {
             .recomendacoes-grid {
                 grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
@@ -131,127 +179,69 @@
     </style>
 </head>
 <body>
-    {% include 'menu.html' %}
+  {% include 'menu.html' %}
 
-    <div class="recomendacoes-container">
-        <div class="recomendacoes-header">
+  <div class="recomendacoes-container">
+      <div class="recomendacoes-header">
           <h1>{{ titulo_pagina }}</h1>
           {% if livro_origem %}
               <p>Livros relacionados a "{{ livro_origem.titulo }}"</p>
           {% else %}
               <p>Baseado em seus livros favoritos e preferências</p>
           {% endif %}
-            <!-- Filtros rápidos -->
-            <div class="filters" style="margin-top: 20px;">
-                <span>Filtrar por:</span>
-                <button class="filter-btn active" data-filter="all">Todos</button>
-                <button class="filter-btn" data-filter="high">Alta relevância</button>
-                <button class="filter-btn" data-filter="same-author">Mesmo autor</button>
-            </div>
-        </div>
-        
-        <div class="recomendacoes-grid">
-            {% if recomendacoes %}
-                {% for recomendacao in recomendacoes %}
-                <div class="recomendacao-card" 
-                     data-strength="{{ recomendacao.peso }}"
-                     data-author="{{ recomendacao.livro_destino.autores|lower }}">
-                    <!-- Botão de favorito -->
-                    <button class="favorite-heart {% if recomendacao.livro_destino.id in favoritos_ids %}favorited{% endif %}" 
-                            data-livro-id="{{ recomendacao.livro_destino.id }}">
-                        <i class="{% if recomendacao.livro_destino.id in favoritos_ids %}fas{% else %}far{% endif %} fa-heart"></i>
-                    </button>
-                    
-                    <!-- Capa do livro -->
-                    <div class="recomendacao-cover">
-                        <span class="recomendacao-strength">
-                            <i class="fas fa-bolt"></i> {{ recomendacao.peso }}/5
-                        </span>
-                        {% if recomendacao.livro_destino.capa %}
-                            <img src="{{ recomendacao.livro_destino.capa.url }}" alt="{{ recomendacao.livro_destino.titulo }}">
-                        {% else %}
-                            <img src="{% static 'imgs/book-placeholder.png' %}" alt="Sem capa">
-                        {% endif %}
-                    </div>
-                    
-                    <!-- Informações do livro -->
-                    <div class="recomendacao-info">
-                        <h3>{{ recomendacao.livro_destino.titulo }}</h3>
-                        <p>{{ recomendacao.livro_destino.autores|default:"Autor desconhecido" }}</p>
-                        <p class="genre-tags">
-                            {% for genero in recomendacao.livro_destino.lista_generos|slice:":3" %}
-                                <span class="genre-tag">{{ genero }}</span>
-                            {% endfor %}
-                        </p>
-                    </div>
-                </div>
-                {% endfor %}
-            {% else %}
-                <div class="no-results">
-                    <i class="fas fa-book-open" style="font-size: 3rem; margin-bottom: 20px;"></i>
-                    <h3>Nenhuma recomendação disponível no momento</h3>
-                    <p>Complete seu perfil e avalie alguns livros para receber recomendações personalizadas</p>
-                    <a href="{% url 'perfil' %}" class="btn" style="margin-top: 20px;">Completar Perfil</a>
-                </div>
-            {% endif %}
-        </div>
-    </div>
+          
+          
+      </div>
+      
+      <div class="recomendacoes-grid">
+          {% if recomendacoes %}
+              {% for recomendacao in recomendacoes %}
+              <div class="recomendacao-card" 
+                   data-strength="{{ recomendacao.peso }}"
+                   data-author="{{ recomendacao.livro_destino.autores|lower }}">
+                  <button class="favorite-heart {% if recomendacao.livro_destino.id in favoritos_ids %}favorited{% endif %}" 
+                          data-livro-id="{{ recomendacao.livro_destino.id }}">
+                      <i class="{% if recomendacao.livro_destino.id in favoritos_ids %}fas{% else %}far{% endif %} fa-heart"></i>
+                  </button>
+                  
+                  <div class="recomendacao-cover">
+                      <span class="recomendacao-strength">
+                          <i class="fas fa-bolt"></i> {{ recomendacao.peso }}/5
+                      </span>
+                      {% if recomendacao.livro_destino.capa %}
+                          <img src="{{ recomendacao.livro_destino.capa.url }}" alt="{{ recomendacao.livro_destino.titulo }}">
+                      {% else %}
+                          <img src="{% static 'imgs/book-placeholder.png' %}" alt="Sem capa">
+                      {% endif %}
+                  </div>
+                  
+                  <div class="recomendacao-info">
+                      <h3>{{ recomendacao.livro_destino.titulo }}</h3>
+                      <p>{{ recomendacao.livro_destino.autores|default:"Autor desconhecido" }}</p>
+                      <div class="genre-tags">
+                          {% for genero in recomendacao.livro_destino.lista_generos|slice:":3" %}
+                              <span class="genre-tag">{{ genero }}</span>
+                          {% endfor %}
+                      </div>
+                  </div>
+              </div>
+              {% endfor %}
+          {% else %}
+              <div class="no-results">
+                  <i class="fas fa-book-open" style="font-size: 3rem; margin-bottom: 20px;"></i>
+                  <h3>Nenhuma recomendação disponível no momento</h3>
+                  <p>Adicione livros aos seus favoritos para receber recomendações personalizadas</p>
+                  <a href="{% url 'livros' %}" class="btn" style="margin-top: 20px;">Adicionar Favoritos</a>
+              </div>
+          {% endif %}
+      </div>
+  </div>
 
-    {% include 'footer.html' %}
+  {% include 'footer.html' %}
 
-    <script>
-        // Filtros
-        document.querySelectorAll('.filter-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                document.querySelector('.filter-btn.active').classList.remove('active');
-                this.classList.add('active');
-                
-                const filter = this.dataset.filter;
-                const cards = document.querySelectorAll('.recomendacao-card');
-                
-                cards.forEach(card => {
-                    const strength = parseInt(card.dataset.strength);
-                    const author = card.dataset.author;
-                    
-                    if (filter === 'all' || 
-                        (filter === 'high' && strength >= 4) ||
-                        (filter === 'same-author' && author.includes('{{ livro_origem.autores|lower }}'))) {
-                        card.style.display = 'block';
-                    } else {
-                        card.style.display = 'none';
-                    }
-                });
-            });
-        });
-        
-        // Favoritos
-        document.querySelectorAll('.favorite-heart').forEach(heart => {
-            heart.addEventListener('click', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                
-                const livroId = this.getAttribute('data-livro-id');
-                const isFavorited = this.classList.contains('favorited');
-                
-                fetch(`/favoritar/${livroId}/`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': '{{ csrf_token }}',
-                    },
-                    body: JSON.stringify({ 'favoritado': !isFavorited }),
-                })
-                .then(response => {
-                    if (response.ok) {
-                        this.classList.toggle('favorited');
-                        const icon = this.querySelector('i');
-                        icon.classList.toggle('fas');
-                        icon.classList.toggle('far');
-                    }
-                })
-                .catch(error => console.error('Erro ao favoritar:', error));
-            });
-        });
-    </script>
+  <script>
+      document.addEventListener('DOMContentLoaded', function() {
+      });
+  </script>
 </body>
 </html>

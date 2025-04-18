@@ -31,26 +31,22 @@ class Titulo(models.Model):
 
 class Livro(models.Model):
     """Modelo principal para livros, integrado com a API do Google Books"""
-    google_id = models.CharField(max_length=255, unique=True)
+    id = models.CharField(primary_key=True, max_length=255)  # Usando como primary key
     titulo = models.CharField(max_length=200)
-    slug = models.SlugField(max_length=200, unique=True)
-    autor = models.CharField(max_length=200)
+    slug = models.SlugField(max_length=200, unique=True, blank=True)
     autores = models.TextField(help_text="Nomes dos autores separados por vírgula")
     descricao = models.TextField(blank=True, null=True)
     editora = models.CharField(max_length=100, blank=True, null=True)
     data_publicacao = models.DateField(blank=True, null=True)
-    paginas = models.PositiveIntegerField(blank=True, null=True)
     capa_url = models.URLField(max_length=500, blank=True, null=True)
-    imagem = models.ImageField(upload_to='livros/')
+    capa = models.ImageField(upload_to='livros/', blank=True, null=True)  # Campo renomeado
     idioma = models.CharField(max_length=10, blank=True, null=True)
-    isbn = models.CharField(max_length=20, blank=True, null=True, verbose_name="ISBN")
+    isbn = models.CharField(max_length=20, blank=True, null=True)
     avaliacao_media = models.FloatField(
         blank=True,
         null=True,
         validators=[MinValueValidator(0), MaxValueValidator(5)]
     )
-    contagem_avaliacoes = models.PositiveIntegerField(default=0)
-    generos = models.ManyToManyField(Genero, related_name='livros', blank=True)
     criado_em = models.DateTimeField(auto_now_add=True)
     atualizado_em = models.DateTimeField(auto_now=True)
 
@@ -61,7 +57,12 @@ class Livro(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.slug:
-            self.slug = slugify(self.titulo)
+            base_slug = slugify(self.titulo)
+            self.slug = base_slug
+            counter = 1
+            while Livro.objects.filter(slug=self.slug).exists():
+                self.slug = f"{base_slug}-{counter}"
+                counter += 1
         super().save(*args, **kwargs)
 
     def __str__(self):
@@ -73,9 +74,10 @@ class Livro(models.Model):
         return [autor.strip() for autor in self.autores.split(',')]
 
     @property
-    def lista_generos(self):
-        """Retorna uma lista de gêneros"""
-        return [genero.nome for genero in self.generos.all()]
+    def capa_thumbnail(self):
+        if self.capa_url:
+            return self.capa_url
+        return '/static/imgs/book-placeholder.png'
 
 
 class Perfil(models.Model):
@@ -87,16 +89,17 @@ class Perfil(models.Model):
 
 
 class Favorito(models.Model):
-    usuario = models.ForeignKey(User, on_delete=models.CASCADE)
-    livro = models.ForeignKey(Livro, on_delete=models.CASCADE)
-    data_criacao = models.DateTimeField(auto_now_add=True)
+    usuario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    livro = models.ForeignKey('Livro', on_delete=models.CASCADE)
+    criado_em = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         unique_together = ('usuario', 'livro')
+        verbose_name = 'Favorito'
         verbose_name_plural = 'Favoritos'
 
     def __str__(self):
-        return f'{self.usuario.username} favoritou {self.livro.titulo}'
+        return f"{self.usuario.username} - {self.livro.titulo}"
 
 class Prefere(models.Model):
     usuario = models.ForeignKey(User, on_delete=models.CASCADE)

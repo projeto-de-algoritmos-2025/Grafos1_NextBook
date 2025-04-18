@@ -220,14 +220,13 @@
                 .filter-btn i {
                     margin-right: 5px;
                 }
+
+                
             }
         </style>
     </head>
   
     <body>
-        <script src="{% static 'js/favoritos.js' %}"></script>
-        var csrfToken = '{{ csrf_token }}';
-        
         {% include 'menu.html' %}
       
         <main class="main-content">
@@ -249,7 +248,11 @@
                         {% for livro in livros %}
                         <div class="book-card">
                             <div class="book-cover">
-                                <div class="favorite-heart {% if livro.id in favoritos_ids %}favorited{% endif %}" data-livro-id="{{ livro.id }}">
+                                <div class="favorite-heart {% if livro.id in favoritos_ids %}favorited{% endif %}" 
+                                     data-livro-id="{{ livro.id }}"
+                                     data-livro-titulo="{{ livro.volumeInfo.title|default:'Título desconhecido' }}"
+                                     data-livro-autores="{{ livro.volumeInfo.authors|join:', '|default:'Autor desconhecido' }}"
+                                     data-livro-capa="{% if livro.volumeInfo.imageLinks %}{{ livro.volumeInfo.imageLinks.thumbnail }}{% else %}{% static 'imgs/book-placeholder.png' %}{% endif %}">
                                     <i class="{% if livro.id in favoritos_ids %}fas{% else %}far{% endif %} fa-heart"></i>
                                 </div>
                         
@@ -299,32 +302,83 @@
         {% include 'footer.html' %}
 
         <script>
-            // Lógica para alternar o estado do coração de favorito
-            const hearts = document.querySelectorAll('.favorite-heart');
-            hearts.forEach(heart => {
-                heart.addEventListener('click', function() {
+            // Função para obter o token CSRF
+            function getCookie(name) {
+                let cookieValue = null;
+                if (document.cookie && document.cookie !== '') {
+                    const cookies = document.cookie.split(';');
+                    for (let i = 0; i < cookies.length; i++) {
+                        const cookie = cookies[i].trim();
+                        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                            break;
+                        }
+                    }
+                }
+                return cookieValue;
+            }
+
+            // Lógica para favoritar livros
+            document.querySelectorAll('.favorite-heart').forEach(heart => {
+                heart.addEventListener('click', async function(e) {
+                    e.stopPropagation();
+                    const heart = this;
                     const livroId = heart.getAttribute('data-livro-id');
+                    const livroTitulo = heart.getAttribute('data-livro-titulo');
+                    const livroAutores = heart.getAttribute('data-livro-autores');
+                    const livroCapa = heart.getAttribute('data-livro-capa');
                     const isFavorited = heart.classList.contains('favorited');
                     
-                    // Enviar a requisição para favoritar/desfavoritar
-                    fetch(`/favoritar/${livroId}/`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRFToken': '{{ csrf_token }}',
-                        },
-                        body: JSON.stringify({ 'favoritado': !isFavorited }),
-                    })
-                    .then(response => {
-                        if (response.ok) {
-                            // Alterna a classe favorited
+                    // Feedback visual imediato
+                    heart.style.pointerEvents = 'none';
+                    const icon = heart.querySelector('i');
+                    icon.classList.add('fa-spin');
+
+                    try {
+                        const response = await fetch(`/favoritar/${livroId}/`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': getCookie('csrftoken'),
+                            },
+                            body: JSON.stringify({ 
+                                'favoritado': !isFavorited,
+                                'titulo': livroTitulo,
+                                'autores': livroAutores,
+                                'capa_url': livroCapa
+                            })
+                        });
+
+                        if (!response.ok) {
+                            throw new Error(`Erro HTTP ${response.status}`);
+                        }
+
+                        const data = await response.json();
+                        
+                        if (data.success) {
                             heart.classList.toggle('favorited');
-                            const icon = heart.querySelector('i');
                             icon.classList.toggle('fas');
                             icon.classList.toggle('far');
+                            
+                            // Feedback visual
+                            heart.style.transform = 'scale(1.3)';
+                            setTimeout(() => {
+                                heart.style.transform = '';
+                            }, 300);
+                        } else {
+                            throw new Error(data.message || 'Ação não foi concluída');
                         }
-                    })
-                    .catch(error => console.error('Erro ao favoritar:', error));
+                    } catch (error) {
+                        console.error('Erro ao favoritar:', error);
+                        alert('Erro ao favoritar: ' + error.message);
+                        // Reverte a mudança visual
+                        heart.classList.toggle('favorited', isFavorited);
+                        icon.classList.toggle('fas', !isFavorited);
+                        icon.classList.toggle('far', isFavorited);
+                    } finally {
+                        heart.style.pointerEvents = '';
+                        icon.classList.remove('fa-spin');
+                    }
                 });
             });
         </script>

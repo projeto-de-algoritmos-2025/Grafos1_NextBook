@@ -1,6 +1,5 @@
 # NextBook
 
-**Número da Lista**: X<br>
 **Conteúdo da Disciplina**: Grafos 1
 
 ## Alunos
@@ -10,25 +9,56 @@
 | 17/0108341 | Levi de Oliveira Queiroz |
 
 ## Sobre 
-O NextBook propõe um sistema de recomendação de livros que se baseia no gosto do usuário, oferecendo sugestões personalizadas com base nos gêneros e na avaliação mínima escolhida. Por meio de um grafo de relacionamento entre títulos e gêneros, o sistema permite que o usuário selecione seus gêneros favoritos e defina uma nota mínima, retornando livros que atendem a esses critérios.
+O NextBook propõe um sistema de recomendação de livros que se baseia no gosto do usuário, oferecendo sugestões personalizadas nos ivros favoritos do usuário. Por meio de um grafo de relacionamento entre títulos e gêneros, o sistema permite que o usuário selecione seus livros favoritos, retornando livros que atendem a esses critérios.
 
-O sistema organiza as informações em um grafo, onde cada título (livro) é ligado a seus gêneros associados, e cada título também possui relações com outros títulos que compartilham ao menos um gênero.
 
 ## Screenshots
-Adicione 3 ou mais screenshots do projeto em funcionamento.
 
-## Instalação 
+### Cadastro
+<img src="nextbook_app/static/imgs/telaCadastro.png" alt="Tela Cadastro" width="600"/>
+
+### Login
+<img src="nextbook_app/static/imgs/telaLogin.png" alt="Tela Login" width="600"/>
+
+### Home
+<img src="nextbook_app/static/imgs/telaHome.png" alt="Tela Home" width="600"/>
+
+### Catálogo de Livros
+<img src="nextbook_app/static/imgs/telaLivros.png" alt="Tela Livros" width="600"/>
+
+### Recomendações 
+<img src="nextbook_app/static/imgs/telaRecomendacoes.png" alt="Tela Recomendacoes" width="600"/>
+
+### Perfil
+<img src="nextbook_app/static/imgs/telaPerfil.png" alt="Tela Perfil" width="600"/>
+
+## Pré-requisitos
+
 **Linguagem**: Python<br>
 **Versão**: 3.12.3 ou superior<br>
 **Framework**: Django<br>
-Descreva os pré-requisitos para rodar o seu projeto e os comandos necessários.
 
-## Uso 
-Explique como usar seu projeto caso haja algum passo a passo após o comando de execução.
+## Instalação
 
-## Outros 
-Quaisquer outras informações sobre seu projeto podem ser descritas abaixo.
+Clone o repositório e instale as dependências:
 
 
+### Clone o projeto
+```git clone https://github.com/seu-usuario/seu-repo.git```
+```cd seu-repo ```
 
+### (Opcional) Crie e ative um ambiente virtual
+```python -m venv venv```
+
+### Instale as dependências
+```pip install -r requirements.txt```
+
+### Execute as migrações
+```python manage.py migrate```
+
+### (Opcional) Crie um superusuário
+```python manage.py createsuperuser```
+
+### Rode o servidor
+```python manage.py runserver```
 

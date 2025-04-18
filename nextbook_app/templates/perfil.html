@@ -93,6 +93,8 @@
                     <div class="book-cover">
                         {% if favorito.livro.capa %}
                             <img src="{{ favorito.livro.capa.url }}" alt="{{ favorito.livro.titulo }}">
+                        {% elif favorito.livro.capa_url %}
+                            <img src="{{ favorito.livro.capa_url }}" alt="{{ favorito.livro.titulo }}">
                         {% else %}
                             <img src="{% static 'imgs/book-placeholder.png' %}" alt="Sem capa">
                         {% endif %}
@@ -100,6 +102,11 @@
                     <div class="book-info">
                         <h3>{{ favorito.livro.titulo }}</h3>
                         <p>{{ favorito.livro.autores }}</p>
+                        <form method="post" style="margin-top: 10px;">
+                            {% csrf_token %}
+                            <input type="hidden" name="livro_id" value="{{ favorito.livro.id }}">
+                            <button type="submit" class="btn btn-danger">Desfavoritar</button>
+                        </form>
                     </div>
                 </div>
                 {% empty %}

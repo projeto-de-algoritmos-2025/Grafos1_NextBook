@@ -58,6 +58,11 @@ def realizar_login(request):
 @login_required
 def perfil(request):
     favoritos = Favorito.objects.filter(usuario=request.user)
+    if request.method == 'POST':
+        livro_id = request.POST.get('livro_id')
+        if livro_id:
+            Favorito.objects.filter(usuario=request.user, livro_id=livro_id).delete()
+            request.user.perfil.livros_favoritos.remove(livro_id)
     context = {
         'username': request.user.username,
         'email': request.user.email,
@@ -173,6 +178,8 @@ def livros(request):
             }
         )
 
+        livro['capa_url'] = volume_info.get('imageLinks', {}).get('thumbnail', '/static/imgs/book-placeholder.png')
+
     # Ordenações
     if order == 'title':
         livros_data.sort(key=lambda x: x['volumeInfo'].get('title', '').lower())
@@ -192,21 +199,20 @@ def favoritar_livro(request, livro_id):
         usuario = request.user
 
         # Decode JSON payload
-        try:
-            data = json.loads(request.body.decode('utf-8'))
-        except json.JSONDecodeError:
-            return JsonResponse({'success': False, 'error': 'Invalid JSON payload'}, status=400)
-
-        # Validate required fields
+        data = json.loads(request.body.decode('utf-8'))
         favoritado = data.get('favoritado')
+
         if favoritado is None:
             return JsonResponse({'success': False, 'error': 'Missing "favoritado" field'}, status=400)
 
         with transaction.atomic():
             if favoritado:
                 Favorito.objects.get_or_create(usuario=usuario, livro=livro)
+                usuario.perfil.livros_favoritos.add(livro)
+                atualizar_grafo(usuario, livro)
             else:
                 Favorito.objects.filter(usuario=usuario, livro=livro).delete()
+                usuario.perfil.livros_favoritos.remove(livro)
 
         return JsonResponse({'success': True, 'favoritado': favoritado})
     except Exception as e:
@@ -244,18 +250,18 @@ def toggle_favorito(request):
 def atualizar_grafo(usuario, livro_novo):
     ultimos_favoritos = Favorito.objects.filter(
         usuario=usuario
-    ).exclude(livro=livro_novo).order_by('-data_favorito')[:5]
+    ).exclude(livro=livro_novo).order_by('-criado_em')[:5]
     
     for favorito in ultimos_favoritos:
         GrafoLivros.objects.update_or_create(
             livro_origem=favorito.livro,
             livro_destino=livro_novo,
-            defaults={'peso': models.F('peso') + 1}
+            defaults={'peso': 1}
         )
         GrafoLivros.objects.update_or_create(
             livro_origem=livro_novo,
             livro_destino=favorito.livro,
-            defaults={'peso': models.F('peso') + 1}
+            defaults={'peso': 1}
         )
 
 # Função para recomendação de livros baseada nos gêneros favoritos do usuário

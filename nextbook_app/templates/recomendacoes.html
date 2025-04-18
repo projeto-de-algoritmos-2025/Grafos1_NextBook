@@ -210,6 +210,8 @@
                       </span>
                       {% if recomendacao.livro_destino.capa %}
                           <img src="{{ recomendacao.livro_destino.capa.url }}" alt="{{ recomendacao.livro_destino.titulo }}">
+                      {% elif recomendacao.livro_destino.capa_url %}
+                          <img src="{{ recomendacao.livro_destino.capa_url }}" alt="{{ recomendacao.livro_destino.titulo }}">
                       {% else %}
                           <img src="{% static 'imgs/book-placeholder.png' %}" alt="Sem capa">
                       {% endif %}

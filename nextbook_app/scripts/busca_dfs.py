@@ -72,24 +72,13 @@ def buscar_recomendacoes(slug_livro, max_recomendacoes=5):
 
 # Função para implementar a busca DFS com base nos livros favoritos do usuário
 def buscar_dfs(usuario):
-    # Carregar o grafo
     grafo = carregar_grafo()
-
-    # Obter os livros favoritos do usuário
-    livros_favoritos = Favorito.objects.filter(usuario=usuario)
-    livros_inicial = [favorito.livro.id for favorito in livros_favoritos]
-    
+    livros_favoritos = Favorito.objects.filter(usuario=usuario).values_list('livro_id', flat=True)
     recomendacoes_totais = []
-    
-    for livro_id in livros_inicial:
-        # Realizar DFS para cada livro favorito
-        recomendacoes = dfs(grafo, livro_id)
-        
-        # Adiciona as recomendações ao total (removendo duplicados)
+
+    for livro_id in livros_favoritos:
+        recomendacoes = dfs(grafo, str(livro_id))
         recomendacoes_totais.extend(recomendacoes)
-    
-    # Remover duplicatas das recomendações
-    recomendacoes_totais = list({livro['id']: livro for livro in recomendacoes_totais}.values())
-    
-    # Retornar as recomendações
-    return recomendacoes_totais
+
+    recomendacoes_unicas = {livro['id']: livro for livro in recomendacoes_totais}.values()
+    return sorted(recomendacoes_unicas, key=lambda x: -x['avaliacao'])

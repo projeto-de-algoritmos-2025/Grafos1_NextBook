@@ -17,42 +17,24 @@ const csrfToken = getCookie('csrftoken');
 
 function toggleFavorito(livroId, heart) {
     const isFavoritado = heart.classList.contains('favorited');
-    const favoritar = !isFavoritado;
-
-    // Validate livroId before sending the request
-    if (!livroId) {
-        console.error('Livro ID inválido.');
-        alert('Erro: Livro ID inválido.');
-        return;
-    }
-
     fetch(`/favoritar/${livroId}/`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'X-CSRFToken': csrfToken,
+            'X-CSRFToken': getCookie('csrftoken'),
         },
-        body: JSON.stringify({ favoritado: favoritar })
+        body: JSON.stringify({ favoritado: !isFavoritado })
     })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error(`HTTP error ${response.status}`);
-        }
-        return response.json();
-    })
+    .then(response => response.json())
     .then(data => {
         if (data.success) {
-            heart.classList.toggle('favorited', favoritar);
+            heart.classList.toggle('favorited', !isFavoritado);
             const icon = heart.querySelector('i');
-            icon.classList.toggle('fas', favoritar);
-            icon.classList.toggle('far', !favoritar);
+            icon.classList.toggle('fas', !isFavoritado);
+            icon.classList.toggle('far', isFavoritado);
         } else {
-            console.error(data.error || 'Erro desconhecido');
-            alert('Erro ao favoritar o livro: ' + (data.error || 'Erro desconhecido'));
+            alert('Erro ao favoritar o livro.');
         }
     })
-    .catch(error => {
-        console.error('Erro ao favoritar:', error);
-        alert('Erro ao favoritar o livro: ' + error.message);
-    });
+    .catch(error => console.error('Erro:', error));
 }

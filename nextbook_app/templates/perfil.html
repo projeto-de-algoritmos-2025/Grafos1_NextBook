@@ -93,11 +93,9 @@
         {% if favoritos %}
             <div class="favorites-grid">
                 {% for favorito in favoritos %}
-                    <a href="{% url 'pagina_livro' livro_id=favorito.livro_google_id %}">
-                        <img src="{{ favorito.capa|default:'/static/imgs/book-placeholder.png' }}" 
-                             alt="{{ favorito.titulo }}"
-                             class="favorite-item">
-                    </a>
+                    <img src="{{ favorito.livro.capa_url|default:'/static/imgs/book-placeholder.png' }}" 
+                         alt="{{ favorito.livro.titulo }}"
+                         class="favorite-item">
                 {% endfor %}
             </div>
         {% else %}

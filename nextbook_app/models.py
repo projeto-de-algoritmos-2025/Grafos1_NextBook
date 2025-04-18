@@ -4,11 +4,12 @@ from django.utils.text import slugify
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.contrib.auth.models import User
 
+
 class Genero(models.Model):
     """Modelo para categorias/gêneros de livros"""
     nome = models.CharField(max_length=50, unique=True)
     slug = models.SlugField(max_length=50, unique=True)
-    
+
     class Meta:
         verbose_name = "Gênero"
         verbose_name_plural = "Gêneros"
@@ -22,24 +23,11 @@ class Genero(models.Model):
     def __str__(self):
         return self.nome
 
-
-class Perfil(models.Model):
-    user= models.OneToOneField(User, on_delete=models.CASCADE)
-    livros_favoritos = models.ManyToManyField('Livro', related_name='favorito_por', blank=True)
-
+class Titulo(models.Model):
+    nome = models.CharField(max_length=200)
 
     def __str__(self):
-        return self.user.username
-
-
-class Favorito(models.Model):
-    usuario = models.ForeignKey(User, on_delete=models.CASCADE)
-    livro_id = models.CharField(max_length=100)
-    data_criacao = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        unique_together = ('usuario', 'livro_id')
-        verbose_name_plural = 'Favoritos'
+        return self.nome
 
 class Livro(models.Model):
     """Modelo principal para livros, integrado com a API do Google Books"""
@@ -57,7 +45,7 @@ class Livro(models.Model):
     idioma = models.CharField(max_length=10, blank=True, null=True)
     isbn = models.CharField(max_length=20, blank=True, null=True, verbose_name="ISBN")
     avaliacao_media = models.FloatField(
-        blank=True, 
+        blank=True,
         null=True,
         validators=[MinValueValidator(0), MaxValueValidator(5)]
     )
@@ -88,3 +76,29 @@ class Livro(models.Model):
     def lista_generos(self):
         """Retorna uma lista de gêneros"""
         return [genero.nome for genero in self.generos.all()]
+
+
+class Perfil(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    livros_favoritos = models.ManyToManyField(Livro, related_name='favorito_por', blank=True)
+
+    def __str__(self):
+        return self.user.username
+
+
+class Favorito(models.Model):
+    usuario = models.ForeignKey(User, on_delete=models.CASCADE)
+    livro = models.ForeignKey(Livro, on_delete=models.CASCADE)
+    data_criacao = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('usuario', 'livro')
+        verbose_name_plural = 'Favoritos'
+
+    def __str__(self):
+        return f'{self.usuario.username} favoritou {self.livro.titulo}'
+
+class Prefere(models.Model):
+    usuario = models.ForeignKey(User, on_delete=models.CASCADE)
+    genero = models.ForeignKey(Genero, on_delete=models.CASCADE)
+    data_criacao = models.DateTimeField(auto_now_add=True)

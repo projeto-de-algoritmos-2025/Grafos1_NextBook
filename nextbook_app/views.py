@@ -154,45 +154,51 @@ def livros(request):
         'livros': livros_data,
     })
 
-@csrf_exempt  
-@require_POST
 @login_required
 def favoritar_livro(request, livro_id):
-    try:
-        # Verifica se o livro existe
-        livro = Livro.objects.get(id=livro_id)
-        usuario = request.user
+    livro = get_object_or_404(Livro, id=livro_id)
+    usuario = request.user
+    
+    if request.method == 'POST':
+        try:
+            # Verifica se já está favoritado
+            favoritado = Favorito.objects.filter(usuario=usuario, livro=livro).exists()
+            
+            if request.POST.get('favoritado') == 'true' and not favoritado:
+                # Adiciona aos favoritos e atualiza o grafo
+                Favorito.objects.create(usuario=usuario, livro=livro)
+                atualizar_grafo(usuario, livro)
+                return JsonResponse({'success': True, 'action': 'added'})
+            elif request.POST.get('favoritado') == 'false' and favoritado:
+                # Remove dos favoritos
+                Favorito.objects.filter(usuario=usuario, livro=livro).delete()
+                return JsonResponse({'success': True, 'action': 'removed'})
+            
+            return JsonResponse({'success': True, 'action': 'no_change'})
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)}, status=400)
+    
+    return JsonResponse({'success': False, 'error': 'Método não permitido'}, status=405)
 
-        # Verifica se a ação é para favoritar ou desfavoritar
-        favoritar = request.POST.get('favoritar') == 'true'
-
-        # Obtendo ou criando o favorito
-        favorito, created = Favorito.objects.get_or_create(usuario=usuario, livro=livro)
-
-        if favoritar:
-            if created:
-                favorito.save()  # Caso o favorito tenha sido criado
-            response_data = {
-                'success': True,
-                'favoritado': True,
-                'message': 'Livro favoritado com sucesso.'
-            }
-        else:
-            favorito.delete()  # Remove o favorito
-            response_data = {
-                'success': True,
-                'favoritado': False,
-                'message': 'Livro removido dos favoritos.'
-            }
-
-        return JsonResponse(response_data)
-
-    except Livro.DoesNotExist:
-        return JsonResponse({'success': False, 'message': 'Livro não encontrado.'})
-
-    except Exception as e:
-        return JsonResponse({'success': False, 'message': f'Erro ao processar a requisição: {str(e)}'})
-
+def atualizar_grafo(usuario, livro_novo):
+    # Pega os últimos 5 favoritos do usuário (excluindo o atual)
+    ultimos_favoritos = Favorito.objects.filter(
+        usuario=usuario
+    ).exclude(livro=livro_novo).order_by('-data_favorito')[:5]
+    
+    for favorito in ultimos_favoritos:
+        # Cria/atualiza conexões no grafo (bidirecional)
+        GrafoLivros.objects.update_or_create(
+            livro_origem=favorito.livro,
+            livro_destino=livro_novo,
+            defaults={'peso': models.F('peso') + 1}  # Incrementa o peso
+        )
+        
+        GrafoLivros.objects.update_or_create(
+            livro_origem=livro_novo,
+            livro_destino=favorito.livro,
+            defaults={'peso': models.F('peso') + 1}
+        )
 # Função para recomendação de livros baseada nos gêneros favoritos do usuário
 def recomendacoes(request, livro_id):
     # Pega as 5 recomendações mais fortes para o livro

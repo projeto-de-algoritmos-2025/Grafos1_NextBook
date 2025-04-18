@@ -234,6 +234,36 @@ def favoritar_livro(request, livro_id):
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)})
     
+@login_required
+def configurar_preferencias(request):
+    if request.method == 'POST':
+        livros_ids = request.POST.getlist('livros')
+        for livro_id in livros_ids:
+            Favorito.objects.get_or_create(usuario=request.user, livro_id=livro_id)
+        return redirect('recomendacoes')
+
+    # Busca livros da API do Google Books
+    try:
+        params = {
+            'q': 'lang:pt',
+            'maxResults': 20,  # Limite de 20 livros
+            'key': settings.GOOGLE_BOOKS_API_KEY
+        }
+        response = requests.get('https://www.googleapis.com/books/v1/volumes', params=params)
+        response.raise_for_status()
+        livros_api = response.json().get('items', [])
+    except Exception as e:
+        print(f"Erro ao buscar livros da API: {e}")
+        livros_api = []
+
+    # Identifica os livros já favoritados pelo usuário
+    favoritos = Favorito.objects.filter(usuario=request.user).values_list('livro_id', flat=True)
+
+    return render(request, 'configurar_preferencias.html', {
+        'livros': livros_api,
+        'favoritos': favoritos,
+    })
+
 def livros_debug(request):
     livros = [
         {

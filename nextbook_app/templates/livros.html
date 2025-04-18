@@ -249,10 +249,8 @@
                         <div class="book-card">
                             <div class="book-cover">
                                 <div class="favorite-heart {% if livro.id in favoritos_ids %}favorited{% endif %}" 
-                                     data-livro-id="{{ livro.id }}"
-                                     data-livro-titulo="{{ livro.volumeInfo.title|default:'Título desconhecido' }}"
-                                     data-livro-autores="{{ livro.volumeInfo.authors|join:', '|default:'Autor desconhecido' }}"
-                                     data-livro-capa="{% if livro.volumeInfo.imageLinks %}{{ livro.volumeInfo.imageLinks.thumbnail }}{% else %}{% static 'imgs/book-placeholder.png' %}{% endif %}">
+                                     data-livro-id="{{ livro.id }}" 
+                                     onclick="toggleFavorito('{{ livro.id }}', this)">
                                     <i class="{% if livro.id in favoritos_ids %}fas{% else %}far{% endif %} fa-heart"></i>
                                 </div>
                         
@@ -339,7 +337,7 @@
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
-                                'X-CSRFToken': getCookie('csrftoken'),
+                                'X-CSRFToken': getCookie('csrftoken'),  // Ensure CSRF token is included
                             },
                             body: JSON.stringify({ 
                                 'favoritado': !isFavorited,
@@ -381,6 +379,32 @@
                     }
                 });
             });
+
+            function toggleFavorito(livroId, heart) {
+                const isFavorited = heart.classList.contains('favorited');
+                const csrfToken = '{{ csrf_token }}';
+
+                fetch('/toggle-favorito/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken,
+                    },
+                    body: JSON.stringify({ livro_id: livroId, favoritado: !isFavorited })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        heart.classList.toggle('favorited');
+                        const icon = heart.querySelector('i');
+                        icon.classList.toggle('fas', data.favoritado);
+                        icon.classList.toggle('far', !data.favoritado);
+                    } else {
+                        alert('Erro ao favoritar o livro.');
+                    }
+                })
+                .catch(error => console.error('Erro:', error));
+            }
         </script>
     </body>
 </html>

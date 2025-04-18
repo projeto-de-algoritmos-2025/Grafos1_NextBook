@@ -1,32 +1,40 @@
-function toggleFavorito(livroId, heart) {
-    // Obtenção do estado atual do coração (favoritado ou não)
-    const isFavoritado = heart.classList.contains('favorited');
-    
-    // Definindo o valor para enviar na requisição POST
-    const favoritar = !isFavoritado;
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
 
-    // Enviando requisição para o Django via fetch
+const csrfToken = getCookie('csrftoken');
+
+function toggleFavorito(livroId, heart) {
+    const isFavoritado = heart.classList.contains('favorited');
     fetch(`/favoritar/${livroId}/`, {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'X-CSRFToken': csrfToken // O token CSRF (coloque o valor do CSRF aqui)
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken'),
         },
-        body: new URLSearchParams({
-            'favoritar': favoritar.toString()
-        })
+        body: JSON.stringify({ favoritado: !isFavoritado })
     })
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            // Alterna a classe do ícone do coração para "favoritado" ou "não favoritado"
-            heart.classList.toggle('favorited', data.favoritado);
+            heart.classList.toggle('favorited', !isFavoritado);
             const icon = heart.querySelector('i');
-            icon.classList.toggle('fas', data.favoritado);  // ícone preenchido
-            icon.classList.toggle('far', !data.favoritado);  // ícone vazio
+            icon.classList.toggle('fas', !isFavoritado);
+            icon.classList.toggle('far', isFavoritado);
         } else {
-            console.log(data.message); // Caso haja algum erro, exibe a mensagem
+            alert('Erro ao favoritar o livro.');
         }
     })
-    .catch(error => console.error('Erro ao favoritar:', error));
+    .catch(error => console.error('Erro:', error));
 }

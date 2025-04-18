@@ -2,8 +2,8 @@ from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
-from .models import Livro, Favorito, GrafoLivros
-from django.views.decorators.csrf import csrf_exempt
+from .models import Livro, Favorito, GrafoLivros, Perfil
+from django.views.decorators.csrf import csrf_exempt, csrf_protect
 from django.views.decorators.http import require_POST
 from nextbook_app.scripts.busca_dfs import buscar_dfs
 from django.contrib.auth.models import User
@@ -11,8 +11,10 @@ import requests
 from django.core.paginator import Paginator
 from django.conf import settings
 import random
-from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import render, get_object_or_404
+from django.db import transaction
+from datetime import datetime
+import json
 
 
 # Função para renderizar a home page
@@ -31,12 +33,12 @@ def cadastro(request):
             return render(request, 'cadastro.html', {'error': 'Nome de usuário já existe.'})
 
         # Criar um novo usuário
-        user = User.objects.create_user(username=username, password=password, email=email)
+        User.objects.create_user(username=username, password=password, email=email)
 
-        # Redirecionar ou renderizar uma página de sucesso
-        return render(request, 'cadastro.html', {'success': 'Usuário criado com sucesso!'})
+        # Redirecionar para a página de login após o cadastro
+        return redirect('login')
 
-    return render(request, 'login.html')
+    return render(request, 'cadastro.html')
 
 
 def realizar_login(request):
@@ -45,6 +47,8 @@ def realizar_login(request):
         password = request.POST.get('password')
         user = authenticate(request, username=username, password=password)
         if user:
+            # Ensure the user has a Perfil object
+            Perfil.objects.get_or_create(user=user)
             login(request, user)
             return redirect('home')
         return render(request, 'login.html', {'erro': 'Usuário ou senha inválidos.'})
@@ -54,6 +58,11 @@ def realizar_login(request):
 @login_required
 def perfil(request):
     favoritos = Favorito.objects.filter(usuario=request.user)
+    if request.method == 'POST':
+        livro_id = request.POST.get('livro_id')
+        if livro_id:
+            Favorito.objects.filter(usuario=request.user, livro_id=livro_id).delete()
+            request.user.perfil.livros_favoritos.remove(livro_id)
     context = {
         'username': request.user.username,
         'email': request.user.email,
@@ -81,9 +90,19 @@ def editar_perfil(request):
 
     return render(request, 'editar-perfil.html', {'user': user})
 
+@login_required
+def deletar_usuario(request):
+    if request.method == 'POST':
+        user = request.user
+        logout(request)  # Desloga o usuário antes de deletar
+        user.delete()  # Deleta o usuário
+        return redirect('home')  # Redireciona para a página inicial
+
+    return render(request, 'deletar_usuario.html')  # Página de confirmação
+
 def realizar_logout(request):
-    logout(request)
-    return redirect('home')
+    logout(request)  # Desloga o usuário
+    return redirect('home')  # Redireciona para a página inicial
 
 
 def livros_debug(request):
@@ -102,12 +121,11 @@ def livros(request):
 
     livros_data = []
 
-    # Lista de temas aleatórios (pode adicionar mais)
     temas = ['fiction', 'romance', 'science', 'history', 'technology', 'fantasy', 'biography']
 
     if random_filter:
         tema = random.choice(temas)
-        start_index = random.randint(0, 100)  # Pega a partir de um ponto aleatório
+        start_index = random.randint(0, 100)
 
         try:
             response = requests.get(
@@ -134,6 +152,34 @@ def livros(request):
             except requests.exceptions.RequestException as e:
                 print(f"Erro na API: {e}")
 
+    # Salvar livros no banco de dados
+    for livro in livros_data:
+        volume_info = livro.get('volumeInfo', {})
+        publicado_em = volume_info.get('publishedDate', None)
+
+        # Tratar diferentes formatos de data
+        if publicado_em:
+            try:
+                if len(publicado_em) == 4:  # Apenas o ano
+                    publicado_em = datetime.strptime(publicado_em, '%Y').date()
+                elif len(publicado_em) == 7:  # Ano e mês
+                    publicado_em = datetime.strptime(publicado_em, '%Y-%m').date()
+                else:  # Ano, mês e dia
+                    publicado_em = datetime.strptime(publicado_em, '%Y-%m-%d').date()
+            except ValueError:
+                publicado_em = None  # Ignorar datas inválidas
+
+        Livro.objects.get_or_create(
+            id=livro['id'],
+            defaults={
+                'titulo': volume_info.get('title', 'Título Desconhecido'),
+                'descricao': volume_info.get('description', 'Descrição não disponível'),
+                'publicado_em': publicado_em,
+            }
+        )
+
+        livro['capa_url'] = volume_info.get('imageLinks', {}).get('thumbnail', '/static/imgs/book-placeholder.png')
+
     # Ordenações
     if order == 'title':
         livros_data.sort(key=lambda x: x['volumeInfo'].get('title', '').lower())
@@ -145,50 +191,79 @@ def livros(request):
     })
 
 @login_required
+@csrf_protect
+@require_POST
 def favoritar_livro(request, livro_id):
-    livro = get_object_or_404(Livro, id=livro_id)
-    usuario = request.user
-    
-    if request.method == 'POST':
-        try:
-            # Verifica se já está favoritado
-            favoritado = Favorito.objects.filter(usuario=usuario, livro=livro).exists()
-            
-            if request.POST.get('favoritado') == 'true' and not favoritado:
-                # Adiciona aos favoritos e atualiza o grafo
-                Favorito.objects.create(usuario=usuario, livro=livro)
+    try:
+        livro = get_object_or_404(Livro, id=livro_id)
+        usuario = request.user
+
+        # Decode JSON payload
+        data = json.loads(request.body.decode('utf-8'))
+        favoritado = data.get('favoritado')
+
+        if favoritado is None:
+            return JsonResponse({'success': False, 'error': 'Missing "favoritado" field'}, status=400)
+
+        with transaction.atomic():
+            if favoritado:
+                Favorito.objects.get_or_create(usuario=usuario, livro=livro)
+                usuario.perfil.livros_favoritos.add(livro)
                 atualizar_grafo(usuario, livro)
-                return JsonResponse({'success': True, 'action': 'added'})
-            elif request.POST.get('favoritado') == 'false' and favoritado:
-                # Remove dos favoritos
+            else:
                 Favorito.objects.filter(usuario=usuario, livro=livro).delete()
-                return JsonResponse({'success': True, 'action': 'removed'})
-            
-            return JsonResponse({'success': True, 'action': 'no_change'})
-        except Exception as e:
-            return JsonResponse({'success': False, 'error': str(e)}, status=400)
-    
-    return JsonResponse({'success': False, 'error': 'Método não permitido'}, status=405)
+                usuario.perfil.livros_favoritos.remove(livro)
+
+        return JsonResponse({'success': True, 'favoritado': favoritado})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=400)
+
+@login_required
+@csrf_protect
+@require_POST
+def toggle_favorito(request):
+    try:
+        data = json.loads(request.body.decode('utf-8'))  # Decode JSON payload
+
+        if 'livro_id' not in data or 'favoritado' not in data:
+            return JsonResponse({'success': False, 'error': 'Missing required fields'}, status=400)
+
+        livro_id = data['livro_id']
+        favoritado = data['favoritado']
+        livro = get_object_or_404(Livro, id=livro_id)
+        usuario = request.user
+
+        with transaction.atomic():
+            if favoritado:
+                Favorito.objects.get_or_create(usuario=usuario, livro=livro)
+                usuario.perfil.livros_favoritos.add(livro)
+            else:
+                Favorito.objects.filter(usuario=usuario, livro=livro).delete()
+                usuario.perfil.livros_favoritos.remove(livro)
+
+        return JsonResponse({'success': True, 'favoritado': favoritado})
+    except json.JSONDecodeError:
+        return JsonResponse({'success': False, 'error': 'Invalid JSON payload'}, status=400)
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=400)
 
 def atualizar_grafo(usuario, livro_novo):
-    # Pega os últimos 5 favoritos do usuário (excluindo o atual)
     ultimos_favoritos = Favorito.objects.filter(
         usuario=usuario
-    ).exclude(livro=livro_novo).order_by('-data_favorito')[:5]
+    ).exclude(livro=livro_novo).order_by('-criado_em')[:5]
     
     for favorito in ultimos_favoritos:
-        # Cria/atualiza conexões no grafo (bidirecional)
         GrafoLivros.objects.update_or_create(
             livro_origem=favorito.livro,
             livro_destino=livro_novo,
-            defaults={'peso': models.F('peso') + 1}  # Incrementa o peso
+            defaults={'peso': 1}
         )
-        
         GrafoLivros.objects.update_or_create(
             livro_origem=livro_novo,
             livro_destino=favorito.livro,
-            defaults={'peso': models.F('peso') + 1}
+            defaults={'peso': 1}
         )
+
 # Função para recomendação de livros baseada nos gêneros favoritos do usuário
 def recomendacoes(request, livro_id):
     # Pega as 5 recomendações mais fortes para o livro

@@ -91,11 +91,10 @@
                 {% for favorito in favoritos %}
                 <div class="book-card">
                     <div class="book-cover">
-                        <div class="favorite-heart favorited" data-livro-id="{{ favorito.livro.id }}">
-                            <i class="fas fa-heart"></i>
-                        </div>
                         {% if favorito.livro.capa %}
                             <img src="{{ favorito.livro.capa.url }}" alt="{{ favorito.livro.titulo }}">
+                        {% elif favorito.livro.capa_url %}
+                            <img src="{{ favorito.livro.capa_url }}" alt="{{ favorito.livro.titulo }}">
                         {% else %}
                             <img src="{% static 'imgs/book-placeholder.png' %}" alt="Sem capa">
                         {% endif %}
@@ -103,6 +102,11 @@
                     <div class="book-info">
                         <h3>{{ favorito.livro.titulo }}</h3>
                         <p>{{ favorito.livro.autores }}</p>
+                        <form method="post" style="margin-top: 10px;">
+                            {% csrf_token %}
+                            <input type="hidden" name="livro_id" value="{{ favorito.livro.id }}">
+                            <button type="submit" class="btn btn-danger">Desfavoritar</button>
+                        </form>
                     </div>
                 </div>
                 {% empty %}
@@ -110,9 +114,6 @@
                 {% endfor %}
             </div>
         </div>
-
-       
-        
     </div>
     {% include 'footer.html' %}
     <script>
@@ -130,7 +131,7 @@
                             'Content-Type': 'application/json',
                             'X-CSRFToken': '{{ csrf_token }}',
                         },
-                        body: JSON.stringify({ 'favoritado': !isFavorited })
+                        body: JSON.stringify({ favoritado: !isFavorited })
                     })
                     .then(response => {
                         if (response.ok) {

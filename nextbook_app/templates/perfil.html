@@ -91,9 +91,6 @@
                 {% for favorito in favoritos %}
                 <div class="book-card">
                     <div class="book-cover">
-                        <div class="favorite-heart favorited" data-livro-id="{{ favorito.livro.id }}">
-                            <i class="fas fa-heart"></i>
-                        </div>
                         {% if favorito.livro.capa %}
                             <img src="{{ favorito.livro.capa.url }}" alt="{{ favorito.livro.titulo }}">
                         {% else %}
@@ -110,9 +107,6 @@
                 {% endfor %}
             </div>
         </div>
-
-       
-        
     </div>
     {% include 'footer.html' %}
     <script>
@@ -130,7 +124,7 @@
                             'Content-Type': 'application/json',
                             'X-CSRFToken': '{{ csrf_token }}',
                         },
-                        body: JSON.stringify({ 'favoritado': !isFavorited })
+                        body: JSON.stringify({ favoritado: !isFavorited })
                     })
                     .then(response => {
                         if (response.ok) {

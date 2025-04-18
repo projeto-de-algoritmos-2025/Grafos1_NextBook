@@ -191,18 +191,31 @@
     {% include 'footer.html' %}
 
     <script>
-        function toggleFavorite(button) {
-            button.classList.toggle('active');
-            const heart = button.querySelector('.heart-icon');
-            if (button.classList.contains('active')) {
-                heart.textContent = '♥'; // preenchido
-                button.innerHTML = `<span class="heart-icon">♥</span> Adicionado aos favoritos`;
-            } else {
-                heart.textContent = '♡'; // vazio
-                button.innerHTML = `<span class="heart-icon">♡</span> Adicionar aos favoritos`;
-            }
-        }
+        function toggleFavorito(button) {
+            const livroId = button.getAttribute('data-livro-id');
+            const isFavorited = button.classList.contains('active');
+            const csrfToken = '{{ csrf_token }}';  // Ensure CSRF token is included
 
+            fetch(`/favoritar/${livroId}/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken,
+                },
+                body: JSON.stringify({ favoritado: !isFavorited })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    button.classList.toggle('active');
+                    const heart = button.querySelector('.heart-icon');
+                    heart.textContent = data.favoritado ? '♥' : '♡';
+                } else {
+                    alert('Erro ao favoritar o livro.');
+                }
+            })
+            .catch(error => console.error('Erro:', error));
+        }
 
         document.addEventListener('DOMContentLoaded', function() {
             // IDs de livros populares para exibir no carrossel
@@ -255,7 +268,7 @@
                                     <h3 class="carousel-book-title">${title}</h3>
                                     <p class="carousel-book-author">${authors}</p>
                                     <p class="carousel-book-description">${description}</p>
-                                    <button class="favorite-btn" onclick="toggleFavorite(this)">
+                                    <button class="favorite-btn" data-livro-id="${bookData.id}" onclick="toggleFavorito(this)">
                                         <span class="heart-icon">♡</span> Adicionar aos favoritos
                                     </button>
                                 </div>

@@ -2,8 +2,8 @@ from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
-from .models import Livro, Favorito, GrafoLivros
-from django.views.decorators.csrf import csrf_exempt
+from .models import Livro, Favorito, GrafoLivros, Perfil
+from django.views.decorators.csrf import csrf_exempt, csrf_protect
 from django.views.decorators.http import require_POST
 from nextbook_app.scripts.busca_dfs import buscar_dfs
 from django.contrib.auth.models import User
@@ -11,10 +11,10 @@ import requests
 from django.core.paginator import Paginator
 from django.conf import settings
 import random
-from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import render, get_object_or_404
 from django.db import transaction
 from datetime import datetime
+import json
 
 
 # Função para renderizar a home page
@@ -47,6 +47,8 @@ def realizar_login(request):
         password = request.POST.get('password')
         user = authenticate(request, username=username, password=password)
         if user:
+            # Ensure the user has a Perfil object
+            Perfil.objects.get_or_create(user=user)
             login(request, user)
             return redirect('home')
         return render(request, 'login.html', {'erro': 'Usuário ou senha inválidos.'})
@@ -182,23 +184,60 @@ def livros(request):
     })
 
 @login_required
-@csrf_exempt
+@csrf_protect
 @require_POST
 def favoritar_livro(request, livro_id):
-    livro = get_object_or_404(Livro, id=livro_id)
-    usuario = request.user
-
     try:
-        favoritado = request.POST.get('favoritado') == 'true'
+        livro = get_object_or_404(Livro, id=livro_id)
+        usuario = request.user
+
+        # Decode JSON payload
+        try:
+            data = json.loads(request.body.decode('utf-8'))
+        except json.JSONDecodeError:
+            return JsonResponse({'success': False, 'error': 'Invalid JSON payload'}, status=400)
+
+        # Validate required fields
+        favoritado = data.get('favoritado')
+        if favoritado is None:
+            return JsonResponse({'success': False, 'error': 'Missing "favoritado" field'}, status=400)
 
         with transaction.atomic():
             if favoritado:
                 Favorito.objects.get_or_create(usuario=usuario, livro=livro)
-                atualizar_grafo(usuario, livro)
             else:
                 Favorito.objects.filter(usuario=usuario, livro=livro).delete()
 
         return JsonResponse({'success': True, 'favoritado': favoritado})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=400)
+
+@login_required
+@csrf_protect
+@require_POST
+def toggle_favorito(request):
+    try:
+        data = json.loads(request.body.decode('utf-8'))  # Decode JSON payload
+
+        if 'livro_id' not in data or 'favoritado' not in data:
+            return JsonResponse({'success': False, 'error': 'Missing required fields'}, status=400)
+
+        livro_id = data['livro_id']
+        favoritado = data['favoritado']
+        livro = get_object_or_404(Livro, id=livro_id)
+        usuario = request.user
+
+        with transaction.atomic():
+            if favoritado:
+                Favorito.objects.get_or_create(usuario=usuario, livro=livro)
+                usuario.perfil.livros_favoritos.add(livro)
+            else:
+                Favorito.objects.filter(usuario=usuario, livro=livro).delete()
+                usuario.perfil.livros_favoritos.remove(livro)
+
+        return JsonResponse({'success': True, 'favoritado': favoritado})
+    except json.JSONDecodeError:
+        return JsonResponse({'success': False, 'error': 'Invalid JSON payload'}, status=400)
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)}, status=400)
 

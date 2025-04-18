@@ -3,6 +3,8 @@ from django.conf import settings
 from django.utils.text import slugify
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.contrib.auth.models import User
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 
 
 class Genero(models.Model):
@@ -87,6 +89,18 @@ class Perfil(models.Model):
 
     def __str__(self):
         return self.user.username
+
+
+@receiver(post_save, sender=User)
+def criar_perfil_usuario(sender, instance, created, **kwargs):
+    if created:
+        Perfil.objects.create(user=instance)
+
+@receiver(post_save, sender=User)
+def salvar_perfil_usuario(sender, instance, **kwargs):
+    # Ensure the Perfil exists before saving
+    Perfil.objects.get_or_create(user=instance)
+    instance.perfil.save()
 
 
 class Favorito(models.Model):

@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
-from .models import Livro, Favorito, Genero, Prefere, Titulo
+from .models import Livro, Favorito, GrafoLivros
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from nextbook_app.scripts.busca_dfs import buscar_dfs
@@ -12,7 +12,7 @@ from django.core.paginator import Paginator
 from django.conf import settings
 import random
 from django.views.decorators.csrf import csrf_exempt
-
+from django.shortcuts import render, get_object_or_404
 
 
 # Função para renderizar a home page
@@ -36,10 +36,9 @@ def cadastro(request):
         # Redirecionar ou renderizar uma página de sucesso
         return render(request, 'cadastro.html', {'success': 'Usuário criado com sucesso!'})
 
-    return render(request, 'cadastro.html')
+    return render(request, 'login.html')
 
 
-# Função para realizar o login do usuário
 def realizar_login(request):
     if request.method == 'POST':
         username = request.POST.get('username')
@@ -52,7 +51,6 @@ def realizar_login(request):
 
     return render(request, 'login.html')
 
-# Função para exibir o perfil do usuário logado
 @login_required
 def perfil(request):
     favoritos = Favorito.objects.filter(usuario=request.user)
@@ -64,7 +62,6 @@ def perfil(request):
     }
     return render(request, 'perfil.html', context)
 
-# Função para editar o perfil do usuário
 @login_required
 def editar_perfil(request):
     user = request.user
@@ -84,17 +81,14 @@ def editar_perfil(request):
 
     return render(request, 'editar-perfil.html', {'user': user})
 
-# Função para realizar o logout do usuário
 def realizar_logout(request):
     logout(request)
     return redirect('home')
 
 
 def livros_debug(request):
-    # Obtendo todos os livros do banco de dados
     livros = Livro.objects.all()
 
-    # Retornando um JsonResponse para facilitar a depuração
     livros_data = [
         {'id': livro.id, 'titulo': livro.titulo, 'autor': livro.autor} for livro in livros
     ]
@@ -127,7 +121,6 @@ def livros(request):
             livros_data = []
 
     else:
-        # Caso não seja aleatório, pega 40 livros normalmente
         for start_index in range(0, 40, 10):
             try:
                 response = requests.get(
@@ -151,8 +144,7 @@ def livros(request):
         'livros': livros_data,
     })
 
-# Função para favoritar ou remover livro dos favoritos
-@csrf_exempt  # Pode ser temporário para testar, mas não é recomendado em produção
+@csrf_exempt  
 @require_POST
 @login_required
 def favoritar_livro(request, livro_id):
@@ -192,30 +184,62 @@ def favoritar_livro(request, livro_id):
         return JsonResponse({'success': False, 'message': f'Erro ao processar a requisição: {str(e)}'})
 
 # Função para recomendação de livros baseada nos gêneros favoritos do usuário
-@login_required
-def recomendacoes(request):
-    usuario = request.user
-    generos = Genero.objects.all()
+def recomendacoes(request, livro_id):
+    # Pega as 5 recomendações mais fortes para o livro
+    recomendacoes = GrafoLivros.objects.filter(
+        livro_origem_id=livro_id
+    ).order_by('-peso')[:5]
+    
+    return render(request, 'recomendacoes.html', {
+        'recomendacoes': recomendacoes,
+        'livro_origem': Livro.objects.get(id=livro_id)
+    })
 
-    if request.method == 'POST':
-        nota_minima = float(request.POST.get('nota_minima', 0))
-        usuario.notaMinima = nota_minima
-        usuario.save()
+from django.shortcuts import render
+from .models import Livro, GrafoLivros, Favorito
 
-        generos_selecionados = request.POST.getlist('generos')
-        Prefere.objects.filter(usuario=usuario).delete()
-        for genero_id in generos_selecionados:
-            genero = Genero.objects.get(id=genero_id)
-            Prefere.objects.create(usuario=usuario, genero=genero)
+def minhas_recomendacoes(request):
+    if not request.user.is_authenticated:
+        # Redirecionar para login ou mostrar mensagem
+        return render(request, 'recomendacoes.html', {
+            'error': 'Você precisa estar logado para ver recomendações'
+        })
 
-        return redirect('recomendacoes') 
+    # Pega os livros favoritados pelo usuário
+    favoritos_ids = Favorito.objects.filter(usuario=request.user).values_list('livro_id', flat=True)
+    
+    # Pega recomendações baseadas nos favoritos
+    recomendacoes = GrafoLivros.objects.filter(
+        livro_origem_id__in=favoritos_ids
+    ).select_related('livro_destino').order_by('-peso')[:10]  # Top 10 recomendações
 
-    generos_preferidos = Prefere.objects.filter(usuario=usuario).values_list('genero_id', flat=True)
+    return render(request, 'recomendacoes.html', {
+        'recomendacoes': recomendacoes,
+        'favoritos_ids': list(favoritos_ids),
+        'titulo_pagina': 'Suas Recomendações Pessoais'
+    })
 
-    # Recomendação baseada em algoritmo de busca
-    ids_recomendados = [recomendado['id'] for recomendado in buscar_dfs(usuario)]
-    recomendados = Titulo.objects.filter(id__in=ids_recomendados).order_by(
-        Case(*[When(id=id, then=pos) for pos, id in enumerate(ids_recomendados)])
-    )
+def recomendacoes_livro(request, livro_id):
+    livro = Livro.objects.get(id=livro_id)
+    recomendacoes = GrafoLivros.objects.filter(
+        livro_origem=livro
+    ).select_related('livro_destino').order_by('-peso')[:5]  # Top 5 recomendações
 
-    return render(request, 'recomendacoes.html', {'recomendados': recomendados})
+    return render(request, 'recomendacoes.html', {
+        'recomendacoes': recomendacoes,
+        'livro_origem': livro,
+        'titulo_pagina': f'Recomendações baseadas em "{livro.titulo}"'
+    })
+
+def livro_detail(request, livro_id):
+    livro = get_object_or_404(Livro, id=livro_id)
+    
+    # Busca recomendações baseadas no grafo
+    recomendacoes = GrafoLivros.objects.filter(
+        livro_origem=livro
+    ).select_related('livro_destino').order_by('-peso')[:5]  # Top 5 recomendações
+    
+    return render(request, 'livro_detail.html', {
+        'livro': livro,
+        'recomendacoes': recomendacoes
+    })

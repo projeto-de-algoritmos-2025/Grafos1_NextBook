@@ -86,21 +86,8 @@
             </a>
         </div>
 
-        <h2 class="profile-header">
-            <i class="fas fa-heart" style="color: #ff6b6b;"></i> Livros Favoritos
-        </h2>
+       
         
-        {% if favoritos %}
-            <div class="favorites-grid">
-                {% for favorito in favoritos %}
-                    <img src="{{ favorito.livro.capa_url|default:'/static/imgs/book-placeholder.png' }}" 
-                         alt="{{ favorito.livro.titulo }}"
-                         class="favorite-item">
-                {% endfor %}
-            </div>
-        {% else %}
-            <p class="no-favorites">Nenhum livro favorito ainda</p>
-        {% endif %}
     </div>
 
     {% include 'footer.html' %}

@@ -102,3 +102,11 @@ class Prefere(models.Model):
     usuario = models.ForeignKey(User, on_delete=models.CASCADE)
     genero = models.ForeignKey(Genero, on_delete=models.CASCADE)
     data_criacao = models.DateTimeField(auto_now_add=True)
+
+class GrafoLivros(models.Model):
+    livro_origem = models.ForeignKey('Livro', related_name='recomendacoes_feitas', on_delete=models.CASCADE)
+    livro_destino = models.ForeignKey('Livro', related_name='recomendacoes_recebidas', on_delete=models.CASCADE)
+    peso = models.IntegerField(default=1)  # Pode representar força da conexão
+
+    class Meta:
+        unique_together = ('livro_origem', 'livro_destino')

@@ -62,3 +62,16 @@ Clone o repositório e instale as dependências:
 ### Rode o servidor
 ```python manage.py runserver```
 
+
+<div align="center">
+  <a href="https://youtu.be/gk3Wuhi4WjE">
+    <img src="https://img.youtube.com/vi/gk3Wuhi4WjE/0.jpg" width="50%">
+  </a>
+</div>
+
+<p align="center">
+  <b>Autor:</b>
+  <a href="https://github.com/rayenealmeida">Rayene Almeida</a> e 
+  <a href="https://github.com/LeviQ27">Levi Queiroz</a>
+</p>
+
